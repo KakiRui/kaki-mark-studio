@@ -25,6 +25,7 @@
     gradientStrength: 92,
     gradientHeight: 48,
     bandBackground: '#141310',
+    bandOpacity: 90,
     bandDateEnabled: false
   });
 
@@ -36,6 +37,7 @@
     background: '#fbfaf7',
     numberEnabled: true,
     numberStart: 1,
+    numberSize: 8,
     numberPosition: 'br',
     soldEnabled: false,
     soldNumbers: '',
@@ -65,6 +67,7 @@
     blend: 'normal',
     x: 0,
     y: 0,
+    placement: 'cell',
     tintEnabled: false,
     tintColor: '#ffffff',
     shadowEnabled: true,
@@ -76,7 +79,7 @@
     glowEnabled: false,
     glowColor: '#ffffff',
     glowOpacity: 48,
-    glowBlur: 35,
+    glowBlur: 60,
     strokeEnabled: false,
     strokeColor: '#ffffff',
     strokeWidth: 5
@@ -89,6 +92,7 @@
     anchor: 'br',
     x: 4,
     y: 4,
+    placement: 'cell',
     rotate: 0,
     shadowEnabled: true,
     shadowColor: '#000000',
@@ -99,10 +103,10 @@
     glowEnabled: false,
     glowColor: '#ffffff',
     glowOpacity: 50,
-    glowBlur: 18,
+    glowBlur: 36,
     strokeEnabled: false,
     strokeColor: '#ffffff',
-    strokeWidth: 2.5
+    strokeWidth: 4
   });
 
   const BLEND_MODES = Object.freeze({
@@ -139,6 +143,7 @@
       small: null
     },
     export: { ...EXPORT_DEFAULTS },
+    previewUrls: [],
     busy: false,
     previewToken: 0,
     renderToken: 0
@@ -183,18 +188,19 @@
       'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkRotate',
       'watermarkRotateValue','watermarkGap','watermarkGapValue','watermarkFont','watermarkColor',
       'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions','tiledOptions',
-      'bandOptions','bandBackground','bandDateEnabled',
+      'bandOptions','bandBackground','bandOpacity','bandOpacityValue','bandDateEnabled',
       'gradientColor','gradientStrength','gradientStrengthValue','gradientHeight',
       'gradientHeightValue','gradientOptions','gradientHeightOptions',
       'collageRatio','collageRows','collageCols','collageGap','collageGapValue','collageBg',
-      'numberEnabled','numberStart','numberPosition','soldEnabled','soldOptions','soldNumbers',
+      'numberEnabled','numberStart','numberSize','numberSizeValue','numberPosition','soldEnabled','soldOptions','soldNumbers',
       'remainingMode','cellMarkEnabled','exportFormat','exportEdge','exportEdgeState',
       'exportEdgeLockBtn','exportQuality','exportQualityValue','exportQualityRow','filePrefix',
       'stageTitle','previewMeta','previewSurface','previewCanvas','emptyState',
       'emptySelectBtn','prevBtn','nextBtn','pagerLabel','downloadCurrentBtn','exportAllBtn',
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
+      'previewAllBtn','resultGallery','resultGrid',
       'numberOptions','fullscreenCount','fullscreenInput','addFullscreenBtn','fullscreenList',
-      'fullscreenPlacementNote','frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
+      'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
       'frameName','frameRemoveBtn','frameShadowControls','frameGlowControls','frameStrokeControls',
       'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
       'smallThumb','smallName','smallRemoveBtn','smallShadowControls','smallGlowControls',
@@ -206,6 +212,7 @@
     el.watermarkControls = Array.from(document.querySelectorAll('[data-watermark]'));
     el.collageControls = Array.from(document.querySelectorAll('[data-collage]'));
     el.markControls = Array.from(document.querySelectorAll('[data-mark]'));
+    el.collageMarkPlacements = Array.from(document.querySelectorAll('.collage-mark-placement'));
     el.exportControls = Array.from(document.querySelectorAll('[data-export]'));
   }
 
@@ -239,9 +246,11 @@
     syncRange(el.watermarkRotate, el.watermarkRotateValue, '°');
     syncRange(el.watermarkGap, el.watermarkGapValue, '');
     syncRange(el.watermarkStroke, el.watermarkStrokeValue);
+    syncRange(el.bandOpacity, el.bandOpacityValue);
     syncRange(el.gradientStrength, el.gradientStrengthValue);
     syncRange(el.gradientHeight, el.gradientHeightValue);
     syncRange(el.collageGap, el.collageGapValue);
+    syncRange(el.numberSize, el.numberSizeValue);
     syncRange(el.exportQuality, el.exportQualityValue);
     document.querySelectorAll('[data-value-for]').forEach((output) => {
       const key = output.dataset.valueFor;
@@ -267,6 +276,7 @@
     el.gradientStrength.value = state.watermark.gradientStrength;
     el.gradientHeight.value = state.watermark.gradientHeight;
     el.bandBackground.value = state.watermark.bandBackground;
+    el.bandOpacity.value = state.watermark.bandOpacity;
     el.bandDateEnabled.checked = state.watermark.bandDateEnabled;
 
     el.collageRatio.value = state.collage.ratio;
@@ -276,6 +286,7 @@
     el.collageBg.value = state.collage.background;
     el.numberEnabled.checked = state.collage.numberEnabled;
     el.numberStart.value = state.collage.numberStart;
+    el.numberSize.value = state.collage.numberSize;
     el.numberPosition.value = state.collage.numberPosition;
     el.soldEnabled.checked = state.collage.soldEnabled;
     el.soldNumbers.value = state.collage.soldNumbers;
@@ -296,7 +307,7 @@
     });
     el.watermarkTab.setAttribute('aria-controls', 'watermarkPanel');
     el.collageTab.setAttribute('aria-controls', 'collagePanel');
-    el.watermarkPanel.hidden = state.mode !== 'watermark';
+    el.watermarkPanel.hidden = false;
     el.collagePanel.hidden = state.mode !== 'collage';
 
     el.numberOptions.hidden = !state.collage.numberEnabled;
@@ -384,6 +395,7 @@
     if (!/^#[0-9a-f]{6}$/i.test(wm.strokeColor)) wm.strokeColor = WATERMARK_DEFAULTS.strokeColor;
     if (!/^#[0-9a-f]{6}$/i.test(wm.gradientColor)) wm.gradientColor = WATERMARK_DEFAULTS.gradientColor;
     if (!/^#[0-9a-f]{6}$/i.test(wm.bandBackground)) wm.bandBackground = WATERMARK_DEFAULTS.bandBackground;
+    wm.bandOpacity = clamp(numberOr(wm.bandOpacity, WATERMARK_DEFAULTS.bandOpacity), 0, 100);
     wm.bandDateEnabled = Boolean(wm.bandDateEnabled);
 
     const cl = state.collage;
@@ -391,24 +403,27 @@
     cl.cols = clamp(Math.round(numberOr(cl.cols, COLLAGE_DEFAULTS.cols)), 1, 8);
     cl.gap = clamp(numberOr(cl.gap, COLLAGE_DEFAULTS.gap), 0, 12);
     cl.numberStart = clamp(Math.round(numberOr(cl.numberStart, 1)), 0, 99999);
+    cl.numberSize = clamp(numberOr(cl.numberSize, COLLAGE_DEFAULTS.numberSize), 2, 18);
     if (!['auto','1','0.75','0.8','0.5625'].includes(cl.ratio)) cl.ratio = 'auto';
-    if (!['br','bl','tr','tl'].includes(cl.numberPosition)) cl.numberPosition = 'br';
+    if (!['br','bl','tr','tl','bc'].includes(cl.numberPosition)) cl.numberPosition = 'br';
     if (!/^#[0-9a-f]{6}$/i.test(cl.background)) cl.background = COLLAGE_DEFAULTS.background;
     cl.soldNumbers = String(cl.soldNumbers ?? '').slice(0, 200);
 
     sanitizeMarkSettings(state.marks.frame, FRAME_DEFAULTS, {
       scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50],
       shadowOpacity: [0, 100], shadowBlur: [0, 120], shadowX: [-40, 40], shadowY: [-40, 40],
-      glowOpacity: [0, 100], glowBlur: [0, 140], strokeWidth: [0.2, 24]
+      glowOpacity: [0, 100], glowBlur: [0, 300], strokeWidth: [0.2, 24]
     });
     sanitizeMarkSettings(state.marks.small, SMALL_DEFAULTS, {
       scale: [3, 70], opacity: [5, 100], x: [-45, 45], y: [-45, 45], rotate: [-45, 45],
       shadowOpacity: [0, 100], shadowBlur: [0, 60], shadowX: [-20, 20], shadowY: [-20, 20],
-      glowOpacity: [0, 100], glowBlur: [0, 80], strokeWidth: [0.2, 16]
+      glowOpacity: [0, 100], glowBlur: [0, 180], strokeWidth: [0.2, 16]
     });
     if (!['tl','tc','tr','ml','mc','mr','bl','bc','br'].includes(state.marks.small.anchor)) {
       state.marks.small.anchor = SMALL_DEFAULTS.anchor;
     }
+    if (!['cell','sheet'].includes(state.marks.frame.placement)) state.marks.frame.placement = FRAME_DEFAULTS.placement;
+    if (!['cell','sheet'].includes(state.marks.small.placement)) state.marks.small.placement = SMALL_DEFAULTS.placement;
 
     const ex = state.export;
     ex.format = ['jpeg','png'].includes(String(ex.format)) ? String(ex.format) : EXPORT_DEFAULTS.format;
@@ -615,9 +630,6 @@
 
   function renderMarkModules() {
     el.fullscreenCount.textContent = `${state.assets.fullscreen.length} 层`;
-    el.fullscreenPlacementNote.textContent = state.mode === 'collage'
-      ? '可在每一层选择叠在拼图前或拼图后；拼图前会进入每个格子下方，拼图后会覆盖整张目录。'
-      : '单图水印模式没有拼图前后之分，底纹会统一叠加在照片上方。';
 
     el.frameStatus.textContent = state.assets.frame ? '已导入' : '未导入';
     el.frameEmpty.hidden = Boolean(state.assets.frame);
@@ -637,6 +649,9 @@
       el.smallName.textContent = state.assets.small.name;
     }
 
+    el.collageMarkPlacements.forEach((node) => {
+      node.hidden = state.mode !== 'collage';
+    });
     updateEffectVisibility();
     renderFullscreenList();
   }
@@ -988,6 +1003,7 @@
     const has = state.files.length > 0;
     el.downloadCurrentBtn.disabled = !has || state.busy;
     el.exportAllBtn.disabled = !has || state.busy;
+    el.previewAllBtn.disabled = !has || state.busy;
     el.exportAllLabel.textContent = state.mode === 'watermark' ? '批量导出 ZIP' : '打包全部页面';
     el.emptyState.hidden = has;
     el.previewCanvas.hidden = !has;
@@ -1004,6 +1020,7 @@
   }
 
   function schedulePreview() {
+    clearResultGallery();
     window.clearTimeout(previewTimer);
     previewTimer = window.setTimeout(() => {
       renderPreview().catch((error) => {
@@ -1136,7 +1153,7 @@
       const dateWidth = dateLabel ? ctx.measureText(dateLabel).width : 0;
       ctx.restore();
       ctx.save();
-      ctx.fillStyle = hexToRgba(wm.bandBackground, 0.9);
+      ctx.fillStyle = hexToRgba(wm.bandBackground, wm.bandOpacity / 100);
       ctx.fillRect(0, bandY, boxW, bandH);
       if (text) {
         const maxTextWidth = boxW - margin * 2 - (dateLabel ? dateWidth + margin : 0);
@@ -1321,12 +1338,12 @@
   function deriveForegroundAlpha(image, width, height) {
     const pixels = image.data;
     const total = width * height;
-    let transparentPixels = 0;
+    let fullyTransparentPixels = 0;
     for (let i = 0; i < total; i++) {
-      if (pixels[i * 4 + 3] < 245) transparentPixels++;
+      if (pixels[i * 4 + 3] < 12) fullyTransparentPixels++;
     }
     const alpha = new Uint8Array(total);
-    if (transparentPixels > total * 0.005) {
+    if (fullyTransparentPixels > total * 0.03) {
       for (let i = 0; i < total; i++) alpha[i] = pixels[i * 4 + 3];
       return alpha;
     }
@@ -1453,7 +1470,7 @@
     if (anchor.startsWith('t')) cy = offsetY + dh / 2;
     if (anchor.startsWith('b')) cy = boxH - offsetY - dh / 2;
 
-    const effectScale = clamp(Math.min(boxW, boxH) / 2000, 0.18, 4);
+    const effectScale = clamp(Math.min(boxW, boxH) / 1200, 0.35, 5);
     ctx.save();
     ctx.translate(cx, cy);
     if (kind === 'small') ctx.rotate((settings.rotate || 0) * Math.PI / 180);
@@ -1558,9 +1575,9 @@
 
   function soldOverlay(ctx, x, y, w, h) {
     ctx.save();
-    ctx.fillStyle = 'rgba(23,22,19,.82)';
+    ctx.fillStyle = 'rgba(23,22,19,.73)';
     ctx.fillRect(x, y, w, h);
-    const size = Math.min(w, h) * 0.052;
+    const size = Math.min(w, h) * 0.085;
     ctx.font = `600 ${size}px ${FONT_STACKS.mono}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1570,9 +1587,23 @@
   }
 
   function drawItemNumber(ctx, number, x, y, w, h) {
-    const size = Math.min(w, h) * 0.04;
+    const size = Math.min(w, h) * (state.collage.numberSize / 100);
     const padding = Math.min(w, h) * 0.035;
     const pos = state.collage.numberPosition;
+    if (pos === 'bc') {
+      ctx.save();
+      ctx.font = `600 ${size}px ${FONT_STACKS.sans}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(1, size * 0.14);
+      ctx.strokeStyle = 'rgba(0,0,0,.45)';
+      ctx.strokeText(String(number), x + w / 2, y + h - padding);
+      ctx.fillStyle = 'rgba(255,255,255,.96)';
+      ctx.fillText(String(number), x + w / 2, y + h - padding);
+      ctx.restore();
+      return;
+    }
     const align = pos === 'tr' || pos === 'br' ? 'right' : 'left';
     const baseline = pos === 'bl' || pos === 'br' ? 'bottom' : 'top';
     const tx = align === 'right' ? x + w - padding : x + padding;
@@ -1638,6 +1669,12 @@
       ctx.clip();
       drawCover(ctx, img, x, y, base.cellW, base.cellH);
       drawFullscreenLayers(ctx, x, y, base.cellW, base.cellH, 'before');
+      if (state.marks.frame.placement === 'cell') {
+        drawCompositeAsset(ctx, state.assets.frame?.image, base.cellW, base.cellH, state.marks.frame, 'frame');
+      }
+      if (state.marks.small.placement === 'cell') {
+        drawCompositeAsset(ctx, state.assets.small?.image, base.cellW, base.cellH, state.marks.small, 'small');
+      }
       const number = state.collage.numberStart + start + slot;
       if (isSold(number)) soldOverlay(ctx, x, y, base.cellW, base.cellH);
       if (state.collage.cellMarkEnabled) {
@@ -1652,7 +1689,12 @@
       ctx.restore();
     }
     drawFullscreenLayers(ctx, 0, 0, base.width, base.height, 'after');
-    drawImportedMarks(ctx, base.width, base.height);
+    if (state.marks.frame.placement === 'sheet') {
+      drawCompositeAsset(ctx, state.assets.frame?.image, base.width, base.height, state.marks.frame, 'frame');
+    }
+    if (state.marks.small.placement === 'sheet') {
+      drawCompositeAsset(ctx, state.assets.small?.image, base.width, base.height, state.marks.small, 'small');
+    }
     ctx.restore();
     return { width, height };
   }
@@ -1761,6 +1803,63 @@
     el.progressText.textContent = text;
     el.progressPercent.textContent = `${percent}%`;
     el.progressBar.style.width = `${percent}%`;
+  }
+
+  function clearResultGallery() {
+    state.previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    state.previewUrls = [];
+    el.resultGrid.innerHTML = '';
+    el.resultGallery.hidden = true;
+  }
+
+  async function loadAllPreviews() {
+    if (state.busy || !state.files.length) return;
+    setBusy(true);
+    clearResultGallery();
+    showProgress(true, '正在生成全部成品…', 0);
+    const total = pageCount();
+    try {
+      for (let page = 0; page < total; page++) {
+        const canvas = await createOutputCanvasForPage(page);
+        const blob = await canvasToBlob(canvas);
+        const url = URL.createObjectURL(blob);
+        state.previewUrls.push(url);
+        const filename = outputFilename(page);
+
+        const figure = document.createElement('figure');
+        figure.className = 'result-item';
+        const image = document.createElement('img');
+        image.src = url;
+        image.alt = filename;
+        image.loading = 'lazy';
+        const caption = document.createElement('figcaption');
+        const label = document.createElement('span');
+        label.textContent = filename;
+        const download = document.createElement('a');
+        download.href = url;
+        download.download = filename;
+        download.textContent = '下载';
+        caption.append(label, download);
+        figure.append(image, caption);
+        el.resultGrid.appendChild(figure);
+
+        showProgress(true, `正在生成第 ${page + 1} / ${total} 张`, Math.round(((page + 1) / total) * 100));
+      }
+      el.resultGallery.hidden = false;
+      el.resultGallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showProgress(true, '全部成品已生成', 100);
+      toast(`已生成 ${total} 张成品，可长按图片保存`);
+    } catch (error) {
+      console.error(error);
+      clearResultGallery();
+      showProgress(false);
+      toast(error.message || '成品预览生成失败', 'error');
+    } finally {
+      setBusy(false);
+      window.setTimeout(() => {
+        if (!state.busy) showProgress(false);
+      }, 2500);
+    }
   }
 
   async function downloadCurrent() {
@@ -1887,6 +1986,7 @@
     el.nextBtn.addEventListener('click', () => goPage(1));
     el.downloadCurrentBtn.addEventListener('click', downloadCurrent);
     el.exportAllBtn.addEventListener('click', exportAllZip);
+    el.previewAllBtn.addEventListener('click', loadAllPreviews);
     el.showWelcomeBtn.addEventListener('click', showWelcome);
     el.welcomeStartBtn.addEventListener('click', () => hideWelcome(true));
     el.welcomeOverlay.addEventListener('click', (event) => {
@@ -1930,7 +2030,8 @@
             gap: el.watermarkGapValue,
             stroke: el.watermarkStrokeValue,
             gradientStrength: el.gradientStrengthValue,
-            gradientHeight: el.gradientHeightValue
+            gradientHeight: el.gradientHeightValue,
+            bandOpacity: el.bandOpacityValue
           };
           syncRange(control, map[control.dataset.watermark], control.dataset.watermark === 'rotate' ? '°' : (control.dataset.watermark === 'gap' ? '' : '%'));
         }
@@ -1960,7 +2061,10 @@
         sanitizeState();
         el.numberOptions.hidden = !state.collage.numberEnabled;
         el.soldOptions.hidden = !state.collage.soldEnabled;
-        if (control.type === 'range') syncRange(control, el.collageGapValue, '%');
+        if (control.type === 'range') {
+          const output = control.dataset.collage === 'numberSize' ? el.numberSizeValue : el.collageGapValue;
+          syncRange(control, output, '%');
+        }
         state.activePage = clamp(state.activePage, 0, Math.max(0, pageCount() - 1));
         syncStageTitle();
         renderQueue();
@@ -1976,12 +2080,14 @@
         readExportControl(control);
         if (control.type === 'range') syncRange(control, el.exportQualityValue);
         updateExportUi();
+        clearResultGallery();
         persistSettings();
       });
     });
     el.exportEdgeLockBtn.addEventListener('click', () => {
       state.export.edgeLocked = !state.export.edgeLocked;
       updateExportUi();
+      clearResultGallery();
       persistSettings();
     });
 
@@ -2037,6 +2143,7 @@
     });
     window.addEventListener('beforeunload', () => {
       state.files.forEach((f) => f.thumbUrl && URL.revokeObjectURL(f.thumbUrl));
+      state.previewUrls.forEach((url) => URL.revokeObjectURL(url));
       releaseAllAssets();
     });
   }

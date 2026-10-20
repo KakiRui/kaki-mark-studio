@@ -34,19 +34,6 @@
   </header>
 
   <main class="page-shell">
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow"><span></span> BATCH MARKING, REIMAGINED</p>
-        <h1>把署名，做成<br><em>作品的一部分。</em></h1>
-        <p class="hero-lead">上传一组图片，实时预览署名、编号与售卖状态，然后一键导出整套成品。</p>
-      </div>
-      <ol class="flow" aria-label="使用步骤">
-        <li><span>01</span><div><strong>导入作品</strong><small>拖入 JPG / PNG / WEBP</small></div></li>
-        <li><span>02</span><div><strong>选择版式</strong><small>水印或目录拼图</small></div></li>
-        <li><span>03</span><div><strong>批量带走</strong><small>逐个 JPEG 或 ZIP 打包</small></div></li>
-      </ol>
-    </section>
-
     <section class="library panel" aria-labelledby="libraryTitle">
       <div class="section-heading">
         <div>
@@ -100,7 +87,7 @@
 
         <div class="mode-panel" id="watermarkPanel">
           <fieldset class="control-group">
-            <legend>一键预设</legend>
+            <legend>快捷预设</legend>
             <div class="preset-grid">
               <button class="preset-card active" type="button" data-preset="tiled">
                 <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
@@ -108,7 +95,7 @@
               </button>
               <button class="preset-card" type="button" data-preset="gradient">
                 <span class="preset-swatch swatch-gradient">KAKI</span>
-                <span><strong>渐变预览</strong><small>雾化底栏 · 居中署名</small></span>
+                <span><strong>渐变预览</strong><small>渐变底栏 · 居中署名</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="band">
                 <span class="preset-swatch swatch-band">KAKI / 001</span>
@@ -123,7 +110,7 @@
               <input id="gradientColor" type="color" value="#141412" data-watermark="gradientColor">
             </div>
             <div>
-              <label for="gradientStrength">渐变浓度 <output id="gradientStrengthValue">92%</output></label>
+              <label for="gradientStrength">渐变不透明度 <output id="gradientStrengthValue">92%</output></label>
               <input id="gradientStrength" type="range" min="10" max="100" step="1" value="92" data-watermark="gradientStrength">
             </div>
           </div>
@@ -136,18 +123,11 @@
           <div class="field-block">
             <label for="watermarkText">水印文字</label>
             <input id="watermarkText" type="text" maxlength="60" autocomplete="off" data-watermark="text">
-            <p class="field-hint">建议使用品牌名、作者名或简短编号。</p>
           </div>
 
-          <div class="control-group compact-grid two-up">
-            <div>
-              <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.2%</output></label>
-              <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.2" data-watermark="size">
-            </div>
-            <div>
-              <label for="watermarkOpacity">不透明度 <output id="watermarkOpacityValue">82%</output></label>
-              <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="82" data-watermark="opacity">
-            </div>
+          <div class="control-group">
+            <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.2%</output></label>
+            <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.2" data-watermark="size">
           </div>
 
           <div class="control-group compact-grid two-up" id="cornerOptions">
@@ -178,14 +158,20 @@
             </div>
           </div>
 
-          <div class="control-group compact-grid two-up" id="bandOptions" hidden>
-            <div class="color-field">
-              <label for="bandBackground">底栏颜色</label>
-              <input id="bandBackground" type="color" value="#141310" data-watermark="bandBackground">
+          <div class="control-group" id="bandOptions" hidden>
+            <div class="compact-grid two-up">
+              <div class="color-field">
+                <label for="bandBackground">底栏颜色</label>
+                <input id="bandBackground" type="color" value="#141310" data-watermark="bandBackground">
+              </div>
+              <div>
+                <label for="bandOpacity">底栏不透明度 <output id="bandOpacityValue">90%</output></label>
+                <input id="bandOpacity" type="range" min="0" max="100" step="1" value="90" data-watermark="bandOpacity">
+              </div>
             </div>
-            <div>
-              <label>右下日期</label>
-              <label class="check-line"><input id="bandDateEnabled" type="checkbox" data-watermark="bandDateEnabled"> 显示当前日期</label>
+            <div class="switch-row">
+              <div><strong>右下日期</strong><small>显示当前日期</small></div>
+              <label class="switch"><input id="bandDateEnabled" type="checkbox" data-watermark="bandDateEnabled"><span></span></label>
             </div>
           </div>
 
@@ -210,9 +196,15 @@
                   <input id="strokeColor" type="color" value="#111111" data-watermark="strokeColor">
                 </div>
               </div>
-              <div>
-                <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
-                <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
+              <div class="two-up">
+                <div>
+                  <label for="watermarkOpacity">文字不透明度 <output id="watermarkOpacityValue">82%</output></label>
+                  <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="82" data-watermark="opacity">
+                </div>
+                <div>
+                  <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
+                  <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
+                </div>
               </div>
             </div>
           </details>
@@ -230,14 +222,12 @@
               <b id="fullscreenCount">0 层</b>
             </summary>
             <div class="module-body">
-              <p class="module-lead">导入透明底的底纹、纸纹或防盗图案，可叠加多层，并分别控制混合方式、不透明度与拼图前后的位置。</p>
               <div class="asset-action-row">
                 <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>
                 <button class="button secondary compact" id="addFullscreenBtn" type="button">导入全屏水印</button>
                 <span>支持 PNG / WEBP · 最多 8 层</span>
               </div>
               <div class="layer-list" id="fullscreenList"></div>
-              <p class="module-note" id="fullscreenPlacementNote">单图水印模式会把所有底纹叠加在照片上。</p>
             </div>
           </details>
 
@@ -247,7 +237,6 @@
               <b id="frameStatus">未导入</b>
             </summary>
             <div class="module-body">
-              <p class="module-lead">导入透明水印框后，可调节尺寸、位置与颜色，并为边缘添加投影、外发光或平滑描边。</p>
               <input type="file" id="frameInput" accept="image/*" hidden>
               <div class="asset-empty" id="frameEmpty">
                 <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
@@ -258,6 +247,13 @@
                   <span class="asset-thumb"><img id="frameThumb" alt=""></span>
                   <div><strong id="frameName">水印框</strong><span>已作为最上层画框合成</span></div>
                   <button class="text-button danger" id="frameRemoveBtn" type="button">移除</button>
+                </div>
+                <div class="field-block collage-mark-placement" hidden>
+                  <label for="framePlacement">目录拼图应用位置</label>
+                  <select id="framePlacement" data-mark="frame.placement">
+                    <option value="cell">每张小图 · 拼图前</option>
+                    <option value="sheet">整张拼图 · 拼图后</option>
+                  </select>
                 </div>
                 <div class="control-group compact-grid two-up">
                   <div>
@@ -287,7 +283,10 @@
                     <input id="frameTintColor" type="color" value="#ffffff" data-mark="frame.tintColor">
                   </div>
                 </div>
-                <label class="check-line frame-tint-toggle"><input id="frameTintEnabled" type="checkbox" data-mark="frame.tintEnabled"> 将水印框替换为所选颜色</label>
+                <div class="switch-row frame-tint-toggle">
+                  <div><strong>统一改色</strong><small>将水印框替换为所选颜色</small></div>
+                  <label class="switch"><input id="frameTintEnabled" type="checkbox" data-mark="frame.tintEnabled"><span></span></label>
+                </div>
                 <div class="control-group compact-grid two-up">
                   <div>
                     <label for="frameX">左右位置 <output data-value-for="frame.x">0%</output></label>
@@ -310,7 +309,7 @@
                         <input id="frameShadowColor" type="color" value="#000000" data-mark="frame.shadowColor">
                       </div>
                       <div>
-                        <label for="frameShadowOpacity">阴影浓度 <output data-value-for="frame.shadowOpacity" data-suffix="%">32%</output></label>
+                        <label for="frameShadowOpacity">阴影不透明度 <output data-value-for="frame.shadowOpacity" data-suffix="%">32%</output></label>
                         <input id="frameShadowOpacity" type="range" min="0" max="100" step="1" value="32" data-mark="frame.shadowOpacity">
                       </div>
                     </div>
@@ -341,13 +340,13 @@
                         <input id="frameGlowColor" type="color" value="#ffffff" data-mark="frame.glowColor">
                       </div>
                       <div>
-                        <label for="frameGlowOpacity">发光浓度 <output data-value-for="frame.glowOpacity" data-suffix="%">48%</output></label>
+                        <label for="frameGlowOpacity">发光不透明度 <output data-value-for="frame.glowOpacity" data-suffix="%">48%</output></label>
                         <input id="frameGlowOpacity" type="range" min="0" max="100" step="1" value="48" data-mark="frame.glowOpacity">
                       </div>
                     </div>
                     <div>
-                      <label for="frameGlowBlur">发光范围 <output data-value-for="frame.glowBlur" data-suffix="px">35px</output></label>
-                      <input id="frameGlowBlur" type="range" min="0" max="140" step="1" value="35" data-mark="frame.glowBlur">
+                      <label for="frameGlowBlur">发光范围 <output data-value-for="frame.glowBlur" data-suffix="px">60px</output></label>
+                      <input id="frameGlowBlur" type="range" min="0" max="300" step="1" value="60" data-mark="frame.glowBlur">
                     </div>
                   </div>
 
@@ -379,7 +378,6 @@
               <b id="smallStatus">未导入</b>
             </summary>
             <div class="module-body">
-              <p class="module-lead">导入 Logo 或小签名，独立调整尺寸、九个落点与上下左右偏移，并可继续叠混合模式与图形效果。</p>
               <input type="file" id="smallInput" accept="image/*" hidden>
               <div class="asset-empty" id="smallEmpty">
                 <div><strong>还没有小水印</strong><span>可以导入带透明通道的 Logo</span></div>
@@ -390,6 +388,13 @@
                   <span class="asset-thumb"><img id="smallThumb" alt=""></span>
                   <div><strong id="smallName">小水印</strong><span>已作为独立角标合成</span></div>
                   <button class="text-button danger" id="smallRemoveBtn" type="button">移除</button>
+                </div>
+                <div class="field-block collage-mark-placement" hidden>
+                  <label for="smallPlacement">目录拼图应用位置</label>
+                  <select id="smallPlacement" data-mark="small.placement">
+                    <option value="cell">每张小图 · 拼图前</option>
+                    <option value="sheet">整张拼图 · 拼图后</option>
+                  </select>
                 </div>
                 <div class="control-group compact-grid two-up">
                   <div>
@@ -457,7 +462,7 @@
                         <input id="smallShadowColor" type="color" value="#000000" data-mark="small.shadowColor">
                       </div>
                       <div>
-                        <label for="smallShadowOpacity">阴影浓度 <output data-value-for="small.shadowOpacity" data-suffix="%">42%</output></label>
+                        <label for="smallShadowOpacity">阴影不透明度 <output data-value-for="small.shadowOpacity" data-suffix="%">42%</output></label>
                         <input id="smallShadowOpacity" type="range" min="0" max="100" step="1" value="42" data-mark="small.shadowOpacity">
                       </div>
                     </div>
@@ -488,13 +493,13 @@
                         <input id="smallGlowColor" type="color" value="#ffffff" data-mark="small.glowColor">
                       </div>
                       <div>
-                        <label for="smallGlowOpacity">发光浓度 <output data-value-for="small.glowOpacity" data-suffix="%">50%</output></label>
+                        <label for="smallGlowOpacity">发光不透明度 <output data-value-for="small.glowOpacity" data-suffix="%">50%</output></label>
                         <input id="smallGlowOpacity" type="range" min="0" max="100" step="1" value="50" data-mark="small.glowOpacity">
                       </div>
                     </div>
                     <div>
-                      <label for="smallGlowBlur">发光范围 <output data-value-for="small.glowBlur" data-suffix="px">18px</output></label>
-                      <input id="smallGlowBlur" type="range" min="0" max="80" step="0.5" value="18" data-mark="small.glowBlur">
+                      <label for="smallGlowBlur">发光范围 <output data-value-for="small.glowBlur" data-suffix="px">36px</output></label>
+                      <input id="smallGlowBlur" type="range" min="0" max="180" step="0.5" value="36" data-mark="small.glowBlur">
                     </div>
                   </div>
 
@@ -509,8 +514,8 @@
                         <input id="smallStrokeColor" type="color" value="#ffffff" data-mark="small.strokeColor">
                       </div>
                       <div>
-                        <label for="smallStrokeWidth">描边粗细 <output data-value-for="small.strokeWidth" data-suffix="px">2.5px</output></label>
-                        <input id="smallStrokeWidth" type="range" min="0.2" max="16" step="0.1" value="2.5" data-mark="small.strokeWidth">
+                        <label for="smallStrokeWidth">描边粗细 <output data-value-for="small.strokeWidth" data-suffix="px">4px</output></label>
+                        <input id="smallStrokeWidth" type="range" min="0.2" max="16" step="0.1" value="4" data-mark="small.strokeWidth">
                       </div>
                     </div>
                   </div>
@@ -556,6 +561,11 @@
           </div>
 
           <div class="switch-row">
+            <div><strong>格子内叠加署名</strong><small>使用上方快捷预设与署名样式</small></div>
+            <label class="switch"><input id="cellMarkEnabled" type="checkbox" data-collage="cellMarkEnabled"><span></span></label>
+          </div>
+
+          <div class="switch-row">
             <div><strong>显示编号</strong><small>按作品队列顺序连续编号</small></div>
             <label class="switch"><input id="numberEnabled" type="checkbox" checked data-collage="numberEnabled"><span></span></label>
           </div>
@@ -566,30 +576,31 @@
               <input id="numberStart" type="number" min="0" max="99999" step="1" value="1" data-collage="numberStart">
             </div>
             <div>
-              <label for="numberPosition">编号位置</label>
-              <select id="numberPosition" data-collage="numberPosition">
-                <option value="br">右下</option>
-                <option value="bl">左下</option>
-                <option value="tr">右上</option>
-                <option value="tl">左上</option>
-              </select>
+              <label for="numberSize">编号大小 <output id="numberSizeValue">8%</output></label>
+              <input id="numberSize" type="range" min="2" max="18" step="0.5" value="8" data-collage="numberSize">
             </div>
           </div>
 
+          <div class="field-block">
+            <label for="numberPosition">编号位置</label>
+            <select id="numberPosition" data-collage="numberPosition">
+              <option value="br">右下</option>
+              <option value="bc">正下方</option>
+              <option value="bl">左下</option>
+              <option value="tr">右上</option>
+              <option value="tl">左上</option>
+            </select>
+          </div>
+
           <div class="switch-row">
-            <div><strong>标记已售作品</strong><small>按编号添加遮罩，继续展示目录</small></div>
+            <div><strong>标记已售作品</strong><small>按编号添加遮挡，继续展示目录</small></div>
             <label class="switch"><input id="soldEnabled" type="checkbox" data-collage="soldEnabled"><span></span></label>
           </div>
 
           <div class="sold-options" id="soldOptions" hidden>
-            <label for="soldNumbers">已售编号</label>
+            <label for="soldNumbers">遮挡编号</label>
             <input id="soldNumbers" type="text" placeholder="例如：1, 3-5, 8.9" data-collage="soldNumbers">
             <label class="check-line"><input id="remainingMode" type="checkbox" data-collage="remainingMode"> 输入的是未售编号，其余全部遮挡</label>
-          </div>
-
-          <div class="switch-row">
-            <div><strong>格子内叠加署名</strong><small>使用“单图水印”中的文字与样式</small></div>
-            <label class="switch"><input id="cellMarkEnabled" type="checkbox" data-collage="cellMarkEnabled"><span></span></label>
           </div>
 
           <p class="tip-box"><span>提示</span> 空白格会保留为画布底色，确保每一页尺寸一致，方便直接发布。</p>
@@ -655,6 +666,10 @@
               <input id="filePrefix" type="text" maxlength="30" value="kaki" data-export="prefix">
             </div>
           </div>
+          <div class="export-preview-bar">
+            <button class="button secondary compact" id="previewAllBtn" type="button">加载全部成品</button>
+            <span>生成后会陈列在下方，iOS 可直接长按图片保存。</span>
+          </div>
         </details>
 
         <div class="stage-actions">
@@ -683,6 +698,14 @@
           <div class="progress-copy"><span id="progressText">正在准备…</span><strong id="progressPercent">0%</strong></div>
           <div class="progress-track"><i id="progressBar"></i></div>
         </div>
+
+        <section class="result-gallery" id="resultGallery" aria-labelledby="resultGalleryTitle" hidden>
+          <div class="result-gallery-heading">
+            <div><p class="overline">EXPORT PREVIEW</p><h3 id="resultGalleryTitle">全部成品</h3></div>
+            <small>iOS 长按图片即可保存</small>
+          </div>
+          <div class="result-grid" id="resultGrid"></div>
+        </section>
       </section>
     </section>
 
