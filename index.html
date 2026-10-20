@@ -125,9 +125,15 @@
             <input id="watermarkText" type="text" maxlength="60" autocomplete="off" data-watermark="text">
           </div>
 
-          <div class="control-group">
-            <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.2%</output></label>
-            <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.2" data-watermark="size">
+          <div class="control-group compact-grid two-up">
+            <div>
+              <label for="watermarkOpacity">不透明度 <output id="watermarkOpacityValue">82%</output></label>
+              <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="82" data-watermark="opacity">
+            </div>
+            <div>
+              <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.2%</output></label>
+              <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.2" data-watermark="size">
+            </div>
           </div>
 
           <div class="control-group compact-grid two-up" id="cornerOptions">
@@ -148,6 +154,16 @@
           </div>
 
           <div class="control-group compact-grid two-up" id="tiledOptions" hidden>
+            <div class="span-two">
+              <label for="watermarkBlend">叠加效果</label>
+              <select id="watermarkBlend" data-watermark="blend">
+                <option value="normal">正常</option>
+                <option value="overlay">叠加</option>
+                <option value="soft-light">柔光</option>
+                <option value="screen">滤色</option>
+                <option value="multiply">正片叠底</option>
+              </select>
+            </div>
             <div>
               <label for="watermarkRotate">倾斜角度 <output id="watermarkRotateValue">-24°</output></label>
               <input id="watermarkRotate" type="range" min="-45" max="45" step="1" value="-24" data-watermark="rotate">
@@ -165,13 +181,38 @@
                 <input id="bandBackground" type="color" value="#141310" data-watermark="bandBackground">
               </div>
               <div>
-                <label for="bandOpacity">底栏不透明度 <output id="bandOpacityValue">90%</output></label>
-                <input id="bandOpacity" type="range" min="0" max="100" step="1" value="90" data-watermark="bandOpacity">
+                <label for="bandOpacity">底栏不透明度 <output id="bandOpacityValue">70%</output></label>
+                <input id="bandOpacity" type="range" min="0" max="100" step="1" value="70" data-watermark="bandOpacity">
               </div>
             </div>
-            <div class="switch-row">
-              <div><strong>右下日期</strong><small>显示当前日期</small></div>
-              <label class="switch"><input id="bandDateEnabled" type="checkbox" data-watermark="bandDateEnabled"><span></span></label>
+            <div class="tint-combo option-combo" id="bandRightCombo">
+              <span class="option-preview" id="bandRightPreview">日期</span>
+              <span class="tint-copy"><strong>右下内容</strong><small>日期 · 自定义 · 价格</small></span>
+              <label class="tint-switch">
+                <input id="bandRightEnabled" type="checkbox" data-watermark="bandRightEnabled">
+                <span></span>
+              </label>
+            </div>
+            <div class="band-right-fields" id="bandRightFields">
+              <div class="field-block">
+                <label for="bandRightMode">内容类型</label>
+                <select id="bandRightMode" data-watermark="bandRightMode">
+                  <option value="date">日期</option>
+                  <option value="custom">自定义文字</option>
+                  <option value="price">价格</option>
+                </select>
+              </div>
+              <div class="field-block" id="bandCustomField" hidden>
+                <label for="bandCustomText">自定义内容</label>
+                <input id="bandCustomText" type="text" maxlength="40" data-watermark="bandCustomText" placeholder="例如：限量 10 件">
+              </div>
+              <div class="field-block" id="bandPriceField" hidden>
+                <label for="bandPrice">价格</label>
+                <div class="unit-input">
+                  <span>RMB</span>
+                  <input id="bandPrice" type="text" inputmode="decimal" data-watermark="bandPrice" placeholder="128">
+                </div>
+              </div>
             </div>
           </div>
 
@@ -196,15 +237,9 @@
                   <input id="strokeColor" type="color" value="#111111" data-watermark="strokeColor">
                 </div>
               </div>
-              <div class="two-up">
-                <div>
-                  <label for="watermarkOpacity">文字不透明度 <output id="watermarkOpacityValue">82%</output></label>
-                  <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="82" data-watermark="opacity">
-                </div>
-                <div>
-                  <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
-                  <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
-                </div>
+              <div>
+                <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
+                <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
               </div>
             </div>
           </details>
@@ -221,7 +256,8 @@
               <b id="fullscreenCount">0 层</b>
             </summary>
             <div class="module-body">
-              <div class="asset-import-row">
+              <div class="asset-empty" id="fullscreenEmpty">
+                <div><strong id="fullscreenEmptyTitle">还没有全屏水印</strong><span id="fullscreenEmptyHint">支持 PNG / WEBP · 最多 8 层</span></div>
                 <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>
                 <button class="button secondary compact" id="addFullscreenBtn" type="button">导入全屏水印</button>
               </div>
@@ -236,7 +272,8 @@
             </summary>
             <div class="module-body">
               <input type="file" id="frameInput" accept="image/*" hidden>
-              <div class="asset-import-row" id="frameEmpty">
+              <div class="asset-empty" id="frameEmpty">
+                <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
                 <button class="button secondary compact" id="frameChooseBtn" type="button">导入水印框</button>
               </div>
               <div id="frameEditor" hidden>
@@ -304,23 +341,23 @@
                         <input id="frameShadowColor" type="color" value="#000000" data-mark="frame.shadowColor">
                       </div>
                       <div>
-                        <label for="frameShadowOpacity">阴影不透明度 <output data-value-for="frame.shadowOpacity" data-suffix="%">32%</output></label>
-                        <input id="frameShadowOpacity" type="range" min="0" max="100" step="1" value="32" data-mark="frame.shadowOpacity">
+                        <label for="frameShadowOpacity">阴影不透明度 <output data-value-for="frame.shadowOpacity" data-suffix="%">70%</output></label>
+                        <input id="frameShadowOpacity" type="range" min="0" max="100" step="1" value="70" data-mark="frame.shadowOpacity">
                       </div>
                     </div>
                     <div class="two-up">
                       <div>
-                        <label for="frameShadowBlur">模糊 <output data-value-for="frame.shadowBlur" data-suffix="px">40px</output></label>
-                        <input id="frameShadowBlur" type="range" min="0" max="120" step="1" value="40" data-mark="frame.shadowBlur">
+                        <label for="frameShadowBlur">模糊 <output data-value-for="frame.shadowBlur" data-suffix="px">5px</output></label>
+                        <input id="frameShadowBlur" type="range" min="0" max="120" step="1" value="5" data-mark="frame.shadowBlur">
                       </div>
                       <div>
-                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX" data-suffix="px">8px</output></label>
-                        <input id="frameShadowX" type="range" min="-40" max="40" step="0.5" value="8" data-mark="frame.shadowX">
+                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX" data-suffix="px">1.5px</output></label>
+                        <input id="frameShadowX" type="range" min="-40" max="40" step="0.5" value="1.5" data-mark="frame.shadowX">
                       </div>
                     </div>
                     <div>
-                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY" data-suffix="px">12px</output></label>
-                      <input id="frameShadowY" type="range" min="-40" max="40" step="0.5" value="12" data-mark="frame.shadowY">
+                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY" data-suffix="px">1.5px</output></label>
+                      <input id="frameShadowY" type="range" min="-40" max="40" step="0.5" value="1.5" data-mark="frame.shadowY">
                     </div>
                   </div>
 
@@ -336,7 +373,8 @@
             </summary>
             <div class="module-body">
               <input type="file" id="smallInput" accept="image/*" hidden>
-              <div class="asset-import-row" id="smallEmpty">
+              <div class="asset-empty" id="smallEmpty">
+                <div><strong>还没有小水印</strong><span>可以导入透明底 Logo</span></div>
                 <button class="button secondary compact" id="smallChooseBtn" type="button">导入小水印</button>
               </div>
               <div id="smallEditor" hidden>
@@ -479,11 +517,6 @@
           </div>
 
           <div class="switch-row">
-            <div><strong>格子内叠加署名</strong><small>使用上方快捷预设与署名样式</small></div>
-            <label class="switch"><input id="cellMarkEnabled" type="checkbox" data-collage="cellMarkEnabled"><span></span></label>
-          </div>
-
-          <div class="switch-row">
             <div><strong>显示编号</strong><small>按作品队列顺序连续编号</small></div>
             <label class="switch"><input id="numberEnabled" type="checkbox" checked data-collage="numberEnabled"><span></span></label>
           </div>
@@ -494,8 +527,8 @@
               <input id="numberStart" type="number" min="0" max="99999" step="1" value="1" data-collage="numberStart">
             </div>
             <div>
-              <label for="numberSize">编号大小 <output id="numberSizeValue">8%</output></label>
-              <input id="numberSize" type="range" min="2" max="18" step="0.5" value="8" data-collage="numberSize">
+              <label for="numberSize">编号大小 <output id="numberSizeValue">13px</output></label>
+              <input id="numberSize" type="range" min="8" max="160" step="1" value="13" data-collage="numberSize">
             </div>
           </div>
 
@@ -648,6 +681,19 @@
       <div class="welcome-footer">
         <span>本机处理 · 不上传图片</span>
         <button class="button primary" id="welcomeStartBtn" type="button">开始制作</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="image-preview-overlay" id="imagePreviewOverlay" role="dialog" aria-modal="true" aria-labelledby="imagePreviewTitle" hidden>
+    <div class="image-preview-card">
+      <button class="image-preview-close" id="imagePreviewCloseBtn" type="button" aria-label="关闭大图预览">×</button>
+      <div class="image-preview-frame">
+        <img id="imagePreviewImg" alt="">
+      </div>
+      <div class="image-preview-caption">
+        <strong id="imagePreviewTitle">作品预览</strong>
+        <span id="imagePreviewMeta"></span>
       </div>
     </div>
   </section>

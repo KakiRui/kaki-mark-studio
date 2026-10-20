@@ -4,7 +4,7 @@
   const MAX_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
-  const STORAGE_KEY = 'kaki-mark-studio-settings-v3';
+  const STORAGE_KEY = 'kaki-mark-studio-settings-v5';
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const PREVIEW_EDGE = 1500;
 
@@ -17,6 +17,7 @@
     margin: 4,
     rotate: -24,
     gap: 28,
+    blend: 'normal',
     font: 'sans',
     color: '#ffffff',
     strokeColor: '#111111',
@@ -25,8 +26,11 @@
     gradientStrength: 92,
     gradientHeight: 48,
     bandBackground: '#141310',
-    bandOpacity: 90,
-    bandDateEnabled: false
+    bandOpacity: 70,
+    bandRightEnabled: false,
+    bandRightMode: 'date',
+    bandCustomText: '',
+    bandPrice: ''
   });
 
   const COLLAGE_DEFAULTS = Object.freeze({
@@ -37,12 +41,11 @@
     background: '#fbfaf7',
     numberEnabled: true,
     numberStart: 1,
-    numberSize: 8,
+    numberSize: 13,
     numberPosition: 'br',
     soldEnabled: false,
     soldNumbers: '',
-    remainingMode: false,
-    cellMarkEnabled: false
+    remainingMode: false
   });
 
   const EXPORT_DEFAULTS = Object.freeze({
@@ -72,10 +75,10 @@
     tintColor: '#ffffff',
     shadowEnabled: true,
     shadowColor: '#000000',
-    shadowOpacity: 32,
-    shadowBlur: 40,
-    shadowX: 8,
-    shadowY: 12,
+    shadowOpacity: 70,
+    shadowBlur: 5,
+    shadowX: 1.5,
+    shadowY: 1.5,
   });
 
   const SMALL_DEFAULTS = Object.freeze({
@@ -149,6 +152,12 @@
     const now = new Date();
     return `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}`;
   };
+  const bandRightLabel = () => {
+    const wm = state.watermark;
+    if (wm.bandRightMode === 'price') return wm.bandPrice ? `RMB ${wm.bandPrice}` : 'RMB';
+    if (wm.bandRightMode === 'custom') return String(wm.bandCustomText || '').trim();
+    return currentDateLabel();
+  };
   const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const hexToRgba = (hex, alpha = 1) => {
     const value = String(hex || '#000000').replace('#', '');
@@ -172,25 +181,29 @@
       'clearImagesBtn','watermarkTab','collageTab','watermarkPanel','collagePanel',
       'watermarkText','watermarkSize','watermarkSizeValue','watermarkOpacity','watermarkOpacityValue',
       'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkRotate',
-      'watermarkRotateValue','watermarkGap','watermarkGapValue','watermarkFont','watermarkColor',
+      'watermarkRotateValue','watermarkGap','watermarkGapValue','watermarkBlend','watermarkFont','watermarkColor',
       'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions','tiledOptions',
-      'bandOptions','bandBackground','bandOpacity','bandOpacityValue','bandDateEnabled',
+      'bandOptions','bandBackground','bandOpacity','bandOpacityValue','bandRightCombo',
+      'bandRightPreview','bandRightEnabled','bandRightFields','bandRightMode',
+      'bandCustomField','bandCustomText','bandPriceField','bandPrice',
       'gradientColor','gradientStrength','gradientStrengthValue','gradientHeight',
       'gradientHeightValue','gradientOptions','gradientHeightOptions',
       'collageRatio','collageRows','collageCols','collageGap','collageGapValue','collageBg',
       'numberEnabled','numberStart','numberSize','numberSizeValue','numberPosition','soldEnabled','soldOptions','soldNumbers',
-      'remainingMode','cellMarkEnabled','exportFormat','exportEdge','exportEdgeState',
+      'remainingMode','exportFormat','exportEdge','exportEdgeState',
       'exportEdgeLockBtn','exportQuality','exportQualityValue','exportQualityRow','filePrefix',
       'stageTitle','previewMeta','previewSurface','previewCanvas','emptyState',
       'emptySelectBtn','prevBtn','nextBtn','pagerLabel','downloadCurrentBtn','exportAllBtn',
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
       'previewAllBtn','resultGallery','resultGrid',
-      'numberOptions','fullscreenCount','fullscreenInput','addFullscreenBtn','fullscreenList',
+      'numberOptions','fullscreenCount','fullscreenEmpty','fullscreenEmptyTitle','fullscreenEmptyHint',
+      'fullscreenInput','addFullscreenBtn','fullscreenList',
       'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
       'frameName','frameRemoveBtn','frameTintCombo','frameShadowControls',
       'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
       'smallThumb','smallName','smallRemoveBtn','smallShadowControls',
-      'smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn'
+      'smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn',
+      'imagePreviewOverlay','imagePreviewImg','imagePreviewTitle','imagePreviewMeta','imagePreviewCloseBtn'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
     el.presetCards = Array.from(document.querySelectorAll('[data-preset]'));
@@ -236,7 +249,7 @@
     syncRange(el.gradientStrength, el.gradientStrengthValue);
     syncRange(el.gradientHeight, el.gradientHeightValue);
     syncRange(el.collageGap, el.collageGapValue);
-    syncRange(el.numberSize, el.numberSizeValue);
+    syncRange(el.numberSize, el.numberSizeValue, 'px');
     syncRange(el.exportQuality, el.exportQualityValue);
     document.querySelectorAll('[data-value-for]').forEach((output) => {
       const key = output.dataset.valueFor;
@@ -254,6 +267,7 @@
     el.watermarkMargin.value = state.watermark.margin;
     el.watermarkRotate.value = state.watermark.rotate;
     el.watermarkGap.value = state.watermark.gap;
+    el.watermarkBlend.value = state.watermark.blend;
     el.watermarkFont.value = state.watermark.font;
     el.watermarkColor.value = state.watermark.color;
     el.strokeColor.value = state.watermark.strokeColor;
@@ -263,7 +277,11 @@
     el.gradientHeight.value = state.watermark.gradientHeight;
     el.bandBackground.value = state.watermark.bandBackground;
     el.bandOpacity.value = state.watermark.bandOpacity;
-    el.bandDateEnabled.checked = state.watermark.bandDateEnabled;
+    el.bandRightEnabled.checked = state.watermark.bandRightEnabled;
+    el.bandRightMode.value = state.watermark.bandRightMode;
+    el.bandCustomText.value = state.watermark.bandCustomText;
+    el.bandPrice.value = state.watermark.bandPrice;
+    updateBandUi();
 
     el.collageRatio.value = state.collage.ratio;
     el.collageRows.value = state.collage.rows;
@@ -277,7 +295,6 @@
     el.soldEnabled.checked = state.collage.soldEnabled;
     el.soldNumbers.value = state.collage.soldNumbers;
     el.remainingMode.checked = state.collage.remainingMode;
-    el.cellMarkEnabled.checked = state.collage.cellMarkEnabled;
 
     el.exportFormat.value = state.export.format;
     el.exportEdge.value = state.export.edge;
@@ -298,7 +315,7 @@
 
     el.numberOptions.hidden = !state.collage.numberEnabled;
     el.soldOptions.hidden = !state.collage.soldEnabled;
-    el.cornerOptions.hidden = ['tiled','band','gradient'].includes(state.watermark.preset);
+    el.cornerOptions.hidden = true;
     el.tiledOptions.hidden = state.watermark.preset !== 'tiled';
     el.gradientOptions.hidden = state.watermark.preset !== 'gradient';
     el.gradientHeightOptions.hidden = state.watermark.preset !== 'gradient';
@@ -330,6 +347,16 @@
     el.exportEdgeState.textContent = locked ? '已锁定' : '可修改';
     el.exportEdgeLockBtn.textContent = locked ? '解锁' : '锁定';
     el.exportQualityRow.hidden = state.export.format !== 'jpeg';
+  }
+
+  function updateBandUi() {
+    const enabled = Boolean(state.watermark.bandRightEnabled);
+    const mode = state.watermark.bandRightMode;
+    el.bandRightCombo.classList.toggle('is-on', enabled);
+    el.bandRightFields.classList.toggle('is-on', enabled);
+    el.bandCustomField.hidden = mode !== 'custom';
+    el.bandPriceField.hidden = mode !== 'price';
+    el.bandRightPreview.textContent = mode === 'date' ? '日期' : mode === 'price' ? 'RMB' : '文字';
   }
 
   function persistSettings() {
@@ -374,7 +401,7 @@
     wm.gradientStrength = clamp(numberOr(wm.gradientStrength, WATERMARK_DEFAULTS.gradientStrength), 10, 100);
     wm.gradientHeight = clamp(numberOr(wm.gradientHeight, WATERMARK_DEFAULTS.gradientHeight), 15, 75);
     if (PRESET_ALIASES[wm.preset]) wm.preset = PRESET_ALIASES[wm.preset];
-    if (!PRESETS[wm.preset]) wm.preset = WATERMARK_DEFAULTS.preset;
+    if (wm.preset !== 'none' && !PRESETS[wm.preset]) wm.preset = WATERMARK_DEFAULTS.preset;
     if (!FONT_STACKS[wm.font]) wm.font = WATERMARK_DEFAULTS.font;
     if (!['br','bl','tr','tl','center'].includes(wm.position)) wm.position = WATERMARK_DEFAULTS.position;
     if (!/^#[0-9a-f]{6}$/i.test(wm.color)) wm.color = WATERMARK_DEFAULTS.color;
@@ -382,14 +409,18 @@
     if (!/^#[0-9a-f]{6}$/i.test(wm.gradientColor)) wm.gradientColor = WATERMARK_DEFAULTS.gradientColor;
     if (!/^#[0-9a-f]{6}$/i.test(wm.bandBackground)) wm.bandBackground = WATERMARK_DEFAULTS.bandBackground;
     wm.bandOpacity = clamp(numberOr(wm.bandOpacity, WATERMARK_DEFAULTS.bandOpacity), 0, 100);
-    wm.bandDateEnabled = Boolean(wm.bandDateEnabled);
+    if (!BLEND_MODES[wm.blend]) wm.blend = WATERMARK_DEFAULTS.blend;
+    if (!['date','custom','price'].includes(wm.bandRightMode)) wm.bandRightMode = WATERMARK_DEFAULTS.bandRightMode;
+    wm.bandRightEnabled = Boolean(wm.bandRightEnabled);
+    wm.bandCustomText = String(wm.bandCustomText ?? '').slice(0, 40);
+    wm.bandPrice = String(wm.bandPrice ?? '').replace(/[^\d.]/g, '').slice(0, 24);
 
     const cl = state.collage;
     cl.rows = clamp(Math.round(numberOr(cl.rows, COLLAGE_DEFAULTS.rows)), 1, 8);
     cl.cols = clamp(Math.round(numberOr(cl.cols, COLLAGE_DEFAULTS.cols)), 1, 8);
     cl.gap = clamp(numberOr(cl.gap, COLLAGE_DEFAULTS.gap), 0, 12);
     cl.numberStart = clamp(Math.round(numberOr(cl.numberStart, 1)), 0, 99999);
-    cl.numberSize = clamp(numberOr(cl.numberSize, COLLAGE_DEFAULTS.numberSize), 2, 18);
+    cl.numberSize = clamp(numberOr(cl.numberSize, COLLAGE_DEFAULTS.numberSize), 8, 160);
     if (!['auto','1','0.75','0.8','0.5625'].includes(cl.ratio)) cl.ratio = 'auto';
     if (!['br','bl','tr','tl','bc'].includes(cl.numberPosition)) cl.numberPosition = 'br';
     if (!/^#[0-9a-f]{6}$/i.test(cl.background)) cl.background = COLLAGE_DEFAULTS.background;
@@ -449,6 +480,13 @@
   function applyPreset(name) {
     name = PRESET_ALIASES[name] || name;
     if (!PRESETS[name]) return;
+    if (state.watermark.preset === name) {
+      state.watermark.preset = 'none';
+      applyUiFromState();
+      persistSettings();
+      schedulePreview();
+      return;
+    }
     state.watermark.preset = name;
     Object.assign(state.watermark, PRESETS[name]);
     applyUiFromState();
@@ -614,6 +652,11 @@
 
   function renderMarkModules() {
     el.fullscreenCount.textContent = `${state.assets.fullscreen.length} 层`;
+    const hasFullscreen = state.assets.fullscreen.length > 0;
+    el.fullscreenEmptyTitle.textContent = hasFullscreen ? '继续添加全屏水印' : '还没有全屏水印';
+    el.fullscreenEmptyHint.textContent = hasFullscreen
+      ? `已导入 ${state.assets.fullscreen.length} / ${MAX_FULLSCREEN_LAYERS} 层`
+      : '支持 PNG / WEBP · 最多 8 层';
 
     el.frameStatus.textContent = state.assets.frame ? '已导入' : '未导入';
     el.frameEmpty.hidden = Boolean(state.assets.frame);
@@ -887,14 +930,20 @@
       remove.textContent = '×';
       remove.addEventListener('click', (event) => {
         event.stopPropagation();
-        removeFile(file.id);
+        if (window.confirm(`确定从作品队列移除“${file.name}”吗？原始文件不会被删除。`)) {
+          removeFile(file.id);
+        }
       });
       item.append(img, badge, remove);
-      item.addEventListener('click', () => selectImage(index));
+      item.addEventListener('click', () => {
+        selectImage(index);
+        openImagePreview(file, index);
+      });
       item.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           selectImage(index);
+          openImagePreview(file, index);
         }
       });
       bindDragSort(item);
@@ -949,6 +998,20 @@
   function formatBytes(bytes) {
     if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  function openImagePreview(record, index) {
+    if (!record) return;
+    el.imagePreviewImg.src = record.thumbUrl;
+    el.imagePreviewImg.alt = record.name;
+    el.imagePreviewTitle.textContent = record.name;
+    el.imagePreviewMeta.textContent = `第 ${index + 1} 张 · ${record.width} × ${record.height}`;
+    el.imagePreviewOverlay.hidden = false;
+  }
+
+  function closeImagePreview() {
+    el.imagePreviewOverlay.hidden = true;
+    el.imagePreviewImg.removeAttribute('src');
   }
 
   function perPage() {
@@ -1037,6 +1100,9 @@
     ctx.textBaseline = baseline;
     ctx.lineJoin = 'round';
     ctx.globalAlpha = (wm.opacity / 100) * alpha;
+    if (wm.preset === 'tiled') {
+      ctx.globalCompositeOperation = BLEND_MODES[wm.blend] || 'source-over';
+    }
     if (wm.stroke > 0) {
       ctx.strokeStyle = wm.strokeColor;
       ctx.lineWidth = Math.max(0.5, size * (wm.stroke / 100) * 1.8);
@@ -1050,11 +1116,12 @@
   function drawWatermark(ctx, boxW, boxH, number, options = {}) {
     const wm = state.watermark;
     const preset = options.preset || wm.preset;
+    if (!preset || preset === 'none') return;
     const dims = options.dims || { x: 0, y: 0, w: boxW, h: boxH };
     const minDim = Math.min(boxW, boxH);
     const text = resolveWatermarkText(wm.text, number).trim();
-    const showDate = preset === 'band' && wm.bandDateEnabled;
-    if (!text && !showDate) return;
+    const rightLabel = preset === 'band' && wm.bandRightEnabled ? bandRightLabel() : '';
+    if (!text && !rightLabel) return;
     const margin = minDim * (wm.margin / 100);
     const baseSize = minDim * (wm.size / 100);
 
@@ -1121,22 +1188,19 @@
     } else if (preset === 'band') {
       const bandH = Math.max(baseSize * 2.75, boxH * 0.085);
       const bandY = boxH - bandH;
-      const dateLabel = showDate ? currentDateLabel() : '';
-      const dateSize = Math.max(8, bandH * 0.2);
-      ctx.save();
-      ctx.font = `600 ${dateSize}px ${FONT_STACKS[wm.font] || FONT_STACKS.sans}`;
-      const dateWidth = dateLabel ? ctx.measureText(dateLabel).width : 0;
-      ctx.restore();
       ctx.save();
       ctx.fillStyle = hexToRgba(wm.bandBackground, wm.bandOpacity / 100);
       ctx.fillRect(0, bandY, boxW, bandH);
+      let size = fitFontSize(ctx, text || rightLabel, baseSize, boxW - margin * 2);
+      ctx.font = `600 ${size}px ${FONT_STACKS[wm.font] || FONT_STACKS.sans}`;
+      const rightWidth = rightLabel ? ctx.measureText(rightLabel).width : 0;
       if (text) {
-        const maxTextWidth = boxW - margin * 2 - (dateLabel ? dateWidth + margin : 0);
-        const size = fitFontSize(ctx, text, baseSize, maxTextWidth);
+        const maxTextWidth = boxW - margin * 2 - (rightLabel ? rightWidth + margin : 0);
+        size = fitFontSize(ctx, text, baseSize, maxTextWidth);
         drawText(ctx, text, margin, bandY + bandH / 2, size * 0.92, 'left', 'middle');
       }
-      if (dateLabel) {
-        drawText(ctx, dateLabel, boxW - margin, bandY + bandH / 2, dateSize, 'right', 'middle', 0.9);
+      if (rightLabel) {
+        drawText(ctx, rightLabel, boxW - margin, bandY + bandH / 2, size * 0.92, 'right', 'middle', 0.9);
       }
       ctx.restore();
     } else {
@@ -1414,8 +1478,9 @@
   }
 
   function drawItemNumber(ctx, number, x, y, w, h) {
-    const size = Math.min(w, h) * (state.collage.numberSize / 100);
-    const padding = Math.min(w, h) * 0.035;
+    const scale = Math.max(0.01, ctx.getTransform().a);
+    const size = state.collage.numberSize / scale;
+    const padding = 10 / scale;
     const pos = state.collage.numberPosition;
     if (pos === 'bc') {
       ctx.save();
@@ -1423,7 +1488,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = Math.max(1, size * 0.14);
+      ctx.lineWidth = Math.max(1 / scale, size * 0.14);
       ctx.strokeStyle = 'rgba(0,0,0,.45)';
       ctx.strokeText(String(number), x + w / 2, y + h - padding);
       ctx.fillStyle = 'rgba(255,255,255,.96)';
@@ -1440,7 +1505,7 @@
     ctx.textAlign = align;
     ctx.textBaseline = baseline;
     ctx.lineJoin = 'round';
-    ctx.lineWidth = Math.max(1, size * 0.14);
+    ctx.lineWidth = Math.max(1 / scale, size * 0.14);
     ctx.strokeStyle = 'rgba(0,0,0,.45)';
     ctx.strokeText(String(number), tx, ty);
     ctx.fillStyle = 'rgba(255,255,255,.96)';
@@ -1497,21 +1562,19 @@
       drawCover(ctx, img, x, y, base.cellW, base.cellH);
       drawFullscreenLayers(ctx, x, y, base.cellW, base.cellH, 'before');
       if (state.marks.frame.placement === 'cell') {
+        ctx.save();
+        ctx.translate(x, y);
         drawCompositeAsset(ctx, state.assets.frame?.image, base.cellW, base.cellH, state.marks.frame, 'frame');
+        ctx.restore();
       }
       if (state.marks.small.placement === 'cell') {
+        ctx.save();
+        ctx.translate(x, y);
         drawCompositeAsset(ctx, state.assets.small?.image, base.cellW, base.cellH, state.marks.small, 'small');
+        ctx.restore();
       }
       const number = state.collage.numberStart + start + slot;
       if (isSold(number)) soldOverlay(ctx, x, y, base.cellW, base.cellH);
-      if (state.collage.cellMarkEnabled) {
-        drawWatermark(ctx, base.cellW, base.cellH, start + slot, {
-          preset: state.watermark.preset === 'tiled' ? 'corner' : state.watermark.preset,
-          dims: { x, y, w: base.cellW, h: base.cellH },
-          clip: true,
-          radius: base.cellW * 0.012
-        });
-      }
       if (state.collage.numberEnabled) drawItemNumber(ctx, number, x, y, base.cellW, base.cellH);
       ctx.restore();
     }
@@ -1752,7 +1815,11 @@
     if (!key) return;
     if (control.type === 'checkbox') state.watermark[key] = control.checked;
     else if (control.type === 'range' || control.type === 'number') state.watermark[key] = numberOr(control.value, WATERMARK_DEFAULTS[key]);
-    else state.watermark[key] = control.value;
+    else {
+      const value = key === 'bandPrice' ? control.value.replace(/[^\d.]/g, '') : control.value;
+      if (key === 'bandPrice') control.value = value;
+      state.watermark[key] = value;
+    }
   }
 
   function readCollageControl(control) {
@@ -1819,6 +1886,10 @@
     el.welcomeOverlay.addEventListener('click', (event) => {
       if (event.target === el.welcomeOverlay) hideWelcome(true);
     });
+    el.imagePreviewCloseBtn.addEventListener('click', closeImagePreview);
+    el.imagePreviewOverlay.addEventListener('click', (event) => {
+      if (event.target === el.imagePreviewOverlay) closeImagePreview();
+    });
     el.frameChooseBtn.addEventListener('click', () => el.frameInput.click());
     el.smallChooseBtn.addEventListener('click', () => el.smallInput.click());
     el.addFullscreenBtn.addEventListener('click', () => el.fullscreenInput.click());
@@ -1848,6 +1919,7 @@
       const eventName = control.tagName === 'SELECT' || control.type === 'color' ? 'change' : 'input';
       control.addEventListener(eventName, () => {
         readWatermarkControl(control);
+        updateBandUi();
         if (control.type === 'range') {
           const map = {
             size: el.watermarkSizeValue,
@@ -1890,7 +1962,7 @@
         el.soldOptions.hidden = !state.collage.soldEnabled;
         if (control.type === 'range') {
           const output = control.dataset.collage === 'numberSize' ? el.numberSizeValue : el.collageGapValue;
-          syncRange(control, output, '%');
+          syncRange(control, output, control.dataset.collage === 'numberSize' ? 'px' : '%');
         }
         state.activePage = clamp(state.activePage, 0, Math.max(0, pageCount() - 1));
         syncStageTitle();
@@ -1954,6 +2026,10 @@
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !el.welcomeOverlay.hidden) {
         hideWelcome(true);
+        return;
+      }
+      if (event.key === 'Escape' && !el.imagePreviewOverlay.hidden) {
+        closeImagePreview();
         return;
       }
       const target = event.target;
