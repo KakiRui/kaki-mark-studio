@@ -9,11 +9,12 @@ A local-first batch image marking workspace for artists, photographers and small
   - **Contact-sheet collage** — configurable rows and columns, continuous numbering, sold-out masks, and optional signatures inside each cell.
 - **Three compositing modules shared by both workspaces**
   - **Full-screen watermark** — import up to eight transparent textures, with per-layer opacity, blend mode, fit mode, and before/after-collage placement.
-  - **Watermark frame** — import a transparent frame and control scale, position, rotation, opacity, blend mode, shadow, glow, smooth distance-transformed outline, and a backdrop-blur silhouette.
+  - **Watermark frame** — import a frame, replace its ink color while preserving the detected foreground, and control scale, position, opacity, blend mode, shadow, glow, and smooth distance-transformed outline.
   - **Small watermark** — import a logo or signature with nine-point placement, offsets, scale, rotation, opacity, blend mode, and the same effect stack.
 - **Live preview** — edits are reflected immediately, with no server round-trip.
-- **Fine-grained effects** — blur, outline, and shadow distances use 0.1–1 px controls, then scale proportionally with the rendered canvas.
-- **Batch export** — render all pages at 1600–4000 px, download one image, or package the set as a ZIP.
+- **Fine-grained effects** — glow, outline, and shadow distances use 0.1–1 px controls, then scale proportionally with the rendered canvas.
+- **Batch export** — write JPEG or PNG at a locked 2400 px long edge by default, unlock other sizes when needed, download one image, or package the set as a ZIP.
+- **First-run guide** — an animated three-step introduction appears on the first visit and can be reopened from the header.
 - **Local and private** — files stay in the browser tab. There is no upload endpoint, account, tracking pixel, or analytics script.
 - **Resilient by design** — validated controls, bounded canvas sizes, failed-image handling, object URL cleanup, keyboard navigation, and a responsive mobile layout.
 - **Self-contained dependencies** — JSZip is vendored in this repository, so the core export flow does not depend on a third-party CDN.
@@ -62,7 +63,7 @@ assets/vendor/jszip.min.js  Local ZIP dependency
 ## Notes
 
 - All processing uses the Canvas API inside the browser.
-- The soft backdrop uses the already-rendered image beneath the mark: it is blurred, clipped to an expanded, feathered watermark silhouette, and composited behind the original artwork.
+- Frame recoloring derives a foreground mask from transparency or image contrast, so a black mark on a white background can be converted to a clean single-color stamp.
 - The export resolution is limited by the selected long edge rather than the source pixel dimensions, avoiding oversized canvases on mobile devices.
 - Settings persist in `localStorage`; imported images are intentionally not persisted after the tab is closed.
 - ZIP compression is set to `STORE` because JPEG data is already compressed, which makes packaging faster without increasing file size in a meaningful way.

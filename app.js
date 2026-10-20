@@ -4,25 +4,28 @@
   const MAX_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
-  const STORAGE_KEY = 'kaki-mark-studio-settings-v2';
+  const STORAGE_KEY = 'kaki-mark-studio-settings-v3';
+  const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const PREVIEW_EDGE = 1500;
 
   const WATERMARK_DEFAULTS = Object.freeze({
-    preset: 'double',
+    preset: 'tiled',
     text: 'KAKI STUDIO',
     size: 3.2,
     opacity: 82,
     position: 'br',
     margin: 4,
     rotate: -24,
-    gap: 18,
+    gap: 28,
     font: 'sans',
     color: '#ffffff',
     strokeColor: '#111111',
     stroke: 0,
     gradientColor: '#141412',
     gradientStrength: 92,
-    gradientHeight: 48
+    gradientHeight: 48,
+    bandBackground: '#141310',
+    bandDateEnabled: false
   });
 
   const COLLAGE_DEFAULTS = Object.freeze({
@@ -41,19 +44,20 @@
   });
 
   const EXPORT_DEFAULTS = Object.freeze({
+    format: 'jpeg',
     edge: '2400',
+    edgeLocked: true,
     quality: 92,
     prefix: 'kaki'
   });
 
   const PRESETS = Object.freeze({
-    double: { opacity: 82, size: 3.2, stroke: 0 },
-    tiled: { opacity: 18, size: 3.8, stroke: 0 },
+    tiled: { opacity: 18, size: 3.8, stroke: 0, gap: 30 },
     gradient: { opacity: 94, size: 5.2, stroke: 0, gradientStrength: 92, gradientHeight: 48 },
     band: { opacity: 92, size: 3.5, stroke: 0 }
   });
 
-  const PRESET_ALIASES = { corner: 'double', center: 'gradient' };
+  const PRESET_ALIASES = { corner: 'tiled', center: 'gradient', double: 'tiled' };
 
   const FRAME_DEFAULTS = Object.freeze({
     scale: 100,
@@ -61,7 +65,8 @@
     blend: 'normal',
     x: 0,
     y: 0,
-    rotate: 0,
+    tintEnabled: false,
+    tintColor: '#ffffff',
     shadowEnabled: true,
     shadowColor: '#000000',
     shadowOpacity: 32,
@@ -74,11 +79,7 @@
     glowBlur: 35,
     strokeEnabled: false,
     strokeColor: '#ffffff',
-    strokeWidth: 5,
-    blurEnabled: false,
-    blurOpacity: 62,
-    blurAmount: 24,
-    blurExpand: 7
+    strokeWidth: 5
   });
 
   const SMALL_DEFAULTS = Object.freeze({
@@ -101,11 +102,7 @@
     glowBlur: 18,
     strokeEnabled: false,
     strokeColor: '#ffffff',
-    strokeWidth: 2.5,
-    blurEnabled: false,
-    blurOpacity: 66,
-    blurAmount: 12,
-    blurExpand: 4
+    strokeWidth: 2.5
   });
 
   const BLEND_MODES = Object.freeze({
@@ -157,6 +154,10 @@
     return Number.isFinite(n) ? n : fallback;
   };
   const pad = (n, len = 2) => String(n).padStart(len, '0');
+  const currentDateLabel = () => {
+    const now = new Date();
+    return `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}`;
+  };
   const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const hexToRgba = (hex, alpha = 1) => {
     const value = String(hex || '#000000').replace('#', '');
@@ -182,20 +183,22 @@
       'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkRotate',
       'watermarkRotateValue','watermarkGap','watermarkGapValue','watermarkFont','watermarkColor',
       'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions','tiledOptions',
+      'bandOptions','bandBackground','bandDateEnabled',
       'gradientColor','gradientStrength','gradientStrengthValue','gradientHeight',
       'gradientHeightValue','gradientOptions','gradientHeightOptions',
       'collageRatio','collageRows','collageCols','collageGap','collageGapValue','collageBg',
       'numberEnabled','numberStart','numberPosition','soldEnabled','soldOptions','soldNumbers',
-      'remainingMode','cellMarkEnabled','exportEdge','exportQuality','exportQualityValue','filePrefix',
+      'remainingMode','cellMarkEnabled','exportFormat','exportEdge','exportEdgeState',
+      'exportEdgeLockBtn','exportQuality','exportQualityValue','exportQualityRow','filePrefix',
       'stageTitle','previewMeta','previewSurface','previewCanvas','emptyState',
       'emptySelectBtn','prevBtn','nextBtn','pagerLabel','downloadCurrentBtn','exportAllBtn',
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
       'numberOptions','fullscreenCount','fullscreenInput','addFullscreenBtn','fullscreenList',
       'fullscreenPlacementNote','frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
       'frameName','frameRemoveBtn','frameShadowControls','frameGlowControls','frameStrokeControls',
-      'frameBlurControls','frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
+      'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
       'smallThumb','smallName','smallRemoveBtn','smallShadowControls','smallGlowControls',
-      'smallStrokeControls','smallBlurControls','smallStatus'
+      'smallStrokeControls','smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
     el.presetCards = Array.from(document.querySelectorAll('[data-preset]'));
@@ -263,6 +266,8 @@
     el.gradientColor.value = state.watermark.gradientColor;
     el.gradientStrength.value = state.watermark.gradientStrength;
     el.gradientHeight.value = state.watermark.gradientHeight;
+    el.bandBackground.value = state.watermark.bandBackground;
+    el.bandDateEnabled.checked = state.watermark.bandDateEnabled;
 
     el.collageRatio.value = state.collage.ratio;
     el.collageRows.value = state.collage.rows;
@@ -277,9 +282,11 @@
     el.remainingMode.checked = state.collage.remainingMode;
     el.cellMarkEnabled.checked = state.collage.cellMarkEnabled;
 
+    el.exportFormat.value = state.export.format;
     el.exportEdge.value = state.export.edge;
     el.exportQuality.value = state.export.quality;
     el.filePrefix.value = state.export.prefix;
+    updateExportUi();
 
     el.presetCards.forEach((card) => card.classList.toggle('active', card.dataset.preset === state.watermark.preset));
     el.modeTabs.forEach((tab) => {
@@ -298,6 +305,7 @@
     el.tiledOptions.hidden = state.watermark.preset !== 'tiled';
     el.gradientOptions.hidden = state.watermark.preset !== 'gradient';
     el.gradientHeightOptions.hidden = state.watermark.preset !== 'gradient';
+    el.bandOptions.hidden = state.watermark.preset !== 'band';
 
     el.markControls.forEach((control) => {
       const value = getPath(state.marks, control.dataset.mark);
@@ -317,6 +325,14 @@
     document.title = state.mode === 'watermark'
       ? 'Kaki Mark Studio · 批量图片水印'
       : 'Kaki Mark Studio · 目录拼图';
+  }
+
+  function updateExportUi() {
+    const locked = Boolean(state.export.edgeLocked);
+    el.exportEdge.disabled = locked;
+    el.exportEdgeState.textContent = locked ? '已锁定' : '可修改';
+    el.exportEdgeLockBtn.textContent = locked ? '解锁' : '锁定';
+    el.exportQualityRow.hidden = state.export.format !== 'jpeg';
   }
 
   function persistSettings() {
@@ -356,7 +372,7 @@
     wm.opacity = clamp(numberOr(wm.opacity, WATERMARK_DEFAULTS.opacity), 5, 100);
     wm.margin = clamp(numberOr(wm.margin, WATERMARK_DEFAULTS.margin), 2, 15);
     wm.rotate = clamp(numberOr(wm.rotate, WATERMARK_DEFAULTS.rotate), -45, 45);
-    wm.gap = clamp(numberOr(wm.gap, WATERMARK_DEFAULTS.gap), 8, 36);
+    wm.gap = clamp(numberOr(wm.gap, WATERMARK_DEFAULTS.gap), 8, 48);
     wm.stroke = clamp(numberOr(wm.stroke, WATERMARK_DEFAULTS.stroke), 0, 12);
     wm.gradientStrength = clamp(numberOr(wm.gradientStrength, WATERMARK_DEFAULTS.gradientStrength), 10, 100);
     wm.gradientHeight = clamp(numberOr(wm.gradientHeight, WATERMARK_DEFAULTS.gradientHeight), 15, 75);
@@ -367,6 +383,8 @@
     if (!/^#[0-9a-f]{6}$/i.test(wm.color)) wm.color = WATERMARK_DEFAULTS.color;
     if (!/^#[0-9a-f]{6}$/i.test(wm.strokeColor)) wm.strokeColor = WATERMARK_DEFAULTS.strokeColor;
     if (!/^#[0-9a-f]{6}$/i.test(wm.gradientColor)) wm.gradientColor = WATERMARK_DEFAULTS.gradientColor;
+    if (!/^#[0-9a-f]{6}$/i.test(wm.bandBackground)) wm.bandBackground = WATERMARK_DEFAULTS.bandBackground;
+    wm.bandDateEnabled = Boolean(wm.bandDateEnabled);
 
     const cl = state.collage;
     cl.rows = clamp(Math.round(numberOr(cl.rows, COLLAGE_DEFAULTS.rows)), 1, 8);
@@ -379,23 +397,23 @@
     cl.soldNumbers = String(cl.soldNumbers ?? '').slice(0, 200);
 
     sanitizeMarkSettings(state.marks.frame, FRAME_DEFAULTS, {
-      scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50], rotate: [-45, 45],
+      scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50],
       shadowOpacity: [0, 100], shadowBlur: [0, 120], shadowX: [-40, 40], shadowY: [-40, 40],
-      glowOpacity: [0, 100], glowBlur: [0, 140], strokeWidth: [0.2, 24],
-      blurOpacity: [0, 100], blurAmount: [1, 120], blurExpand: [0, 60]
+      glowOpacity: [0, 100], glowBlur: [0, 140], strokeWidth: [0.2, 24]
     });
     sanitizeMarkSettings(state.marks.small, SMALL_DEFAULTS, {
       scale: [3, 70], opacity: [5, 100], x: [-45, 45], y: [-45, 45], rotate: [-45, 45],
       shadowOpacity: [0, 100], shadowBlur: [0, 60], shadowX: [-20, 20], shadowY: [-20, 20],
-      glowOpacity: [0, 100], glowBlur: [0, 80], strokeWidth: [0.2, 16],
-      blurOpacity: [0, 100], blurAmount: [1, 80], blurExpand: [0, 40]
+      glowOpacity: [0, 100], glowBlur: [0, 80], strokeWidth: [0.2, 16]
     });
     if (!['tl','tc','tr','ml','mc','mr','bl','bc','br'].includes(state.marks.small.anchor)) {
       state.marks.small.anchor = SMALL_DEFAULTS.anchor;
     }
 
     const ex = state.export;
+    ex.format = ['jpeg','png'].includes(String(ex.format)) ? String(ex.format) : EXPORT_DEFAULTS.format;
     ex.edge = ['1600','2400','3200','4000'].includes(String(ex.edge)) ? String(ex.edge) : EXPORT_DEFAULTS.edge;
+    ex.edgeLocked = ex.edgeLocked === undefined ? EXPORT_DEFAULTS.edgeLocked : Boolean(ex.edgeLocked);
     ex.quality = clamp(Math.round(numberOr(ex.quality, EXPORT_DEFAULTS.quality)), 70, 100);
     ex.prefix = String(ex.prefix || EXPORT_DEFAULTS.prefix).slice(0, 30);
   }
@@ -405,10 +423,12 @@
       settings[key] = clamp(numberOr(settings[key], defaults[key]), min, max);
     });
     if (!BLEND_MODES[settings.blend]) settings.blend = defaults.blend;
-    ['shadowEnabled','glowEnabled','strokeEnabled','blurEnabled'].forEach((key) => {
+    ['shadowEnabled','glowEnabled','strokeEnabled','tintEnabled'].forEach((key) => {
+      if (!(key in defaults)) return;
       settings[key] = Boolean(settings[key]);
     });
-    ['shadowColor','glowColor','strokeColor'].forEach((key) => {
+    ['shadowColor','glowColor','strokeColor','tintColor'].forEach((key) => {
+      if (!(key in defaults)) return;
       if (!/^#[0-9a-f]{6}$/i.test(settings[key])) settings[key] = defaults[key];
     });
   }
@@ -416,6 +436,10 @@
   function resetSettings() {
     state.watermark = { ...WATERMARK_DEFAULTS };
     state.collage = { ...COLLAGE_DEFAULTS };
+    state.marks = {
+      frame: { ...FRAME_DEFAULTS },
+      small: { ...SMALL_DEFAULTS }
+    };
     state.export = { ...EXPORT_DEFAULTS };
     applyUiFromState();
     persistSettings();
@@ -548,8 +572,8 @@
       state.assets.fullscreen.push({
         id: record.id,
         record,
-        opacity: index === 0 ? 42 : 30,
-        blend: index === 0 ? 'soft-light' : 'screen',
+        opacity: 100,
+        blend: 'normal',
         fit: 'cover',
         placement: 'after'
       });
@@ -621,11 +645,9 @@
     el.frameShadowControls.hidden = !state.marks.frame.shadowEnabled;
     el.frameGlowControls.hidden = !state.marks.frame.glowEnabled;
     el.frameStrokeControls.hidden = !state.marks.frame.strokeEnabled;
-    el.frameBlurControls.hidden = !state.marks.frame.blurEnabled;
     el.smallShadowControls.hidden = !state.marks.small.shadowEnabled;
     el.smallGlowControls.hidden = !state.marks.small.glowEnabled;
     el.smallStrokeControls.hidden = !state.marks.small.strokeEnabled;
-    el.smallBlurControls.hidden = !state.marks.small.blurEnabled;
   }
 
   function makeOption(value, label) {
@@ -1039,7 +1061,8 @@
     const dims = options.dims || { x: 0, y: 0, w: boxW, h: boxH };
     const minDim = Math.min(boxW, boxH);
     const text = resolveWatermarkText(wm.text, number).trim();
-    if (!text) return;
+    const showDate = preset === 'band' && wm.bandDateEnabled;
+    if (!text && !showDate) return;
     const margin = minDim * (wm.margin / 100);
     const baseSize = minDim * (wm.size / 100);
 
@@ -1050,21 +1073,7 @@
     }
     ctx.translate(dims.x, dims.y);
 
-    if (preset === 'double') {
-      const maxWidth = boxW - margin * 2;
-      const size = fitFontSize(ctx, text, baseSize, maxWidth);
-      const ghostSize = fitFontSize(ctx, text, minDim * 0.19, boxW * 0.9);
-      drawText(ctx, text, boxW / 2, boxH * 0.54, ghostSize, 'center', 'middle', 0.12);
-      const pos = wm.position === 'center' ? 'br' : wm.position;
-      let x = margin;
-      let y = margin;
-      let align = 'left';
-      let baseline = 'top';
-      if (pos === 'br') { x = boxW - margin; y = boxH - margin; align = 'right'; baseline = 'bottom'; }
-      else if (pos === 'bl') { x = margin; y = boxH - margin; baseline = 'bottom'; }
-      else if (pos === 'tr') { x = boxW - margin; y = margin; align = 'right'; }
-      drawText(ctx, text, x, y, size, align, baseline);
-    } else if (preset === 'tiled') {
+    if (preset === 'tiled') {
       const size = fitFontSize(ctx, text, baseSize, boxW * 0.5);
       const spacing = size * (wm.gap / 10);
       const angle = wm.rotate * Math.PI / 180;
@@ -1080,8 +1089,8 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const measured = ctx.measureText(text).width;
-      const stepX = Math.max(spacing, measured * 0.75);
-      const stepY = size * (wm.gap / 8);
+      const stepX = Math.max(spacing, measured + size * 1.6);
+      const stepY = Math.max(size * 3.5, size * (wm.gap / 6));
       const start = -boxW * 1.1;
       const endX = boxW * 2.1;
       const endY = boxH * 2.1;
@@ -1109,20 +1118,34 @@
       const maxWidth = boxW - margin * 2;
       const ghostSize = fitFontSize(ctx, text, minDim * 0.18, maxWidth * 0.96);
       const size = fitFontSize(ctx, text, baseSize, maxWidth * 0.82);
-      drawText(ctx, text, boxW / 2, top + gradientHeight * 0.48, ghostSize, 'center', 'middle', 0.17);
+      const signatureY = boxH - Math.max(size * 1.45, minDim * 0.075);
+      const ghostY = signatureY - ghostSize * 0.28;
+      drawText(ctx, text, boxW / 2, ghostY, ghostSize, 'center', 'middle', 0.17);
       ctx.save();
       ctx.shadowColor = hexToRgba(wm.gradientColor, 0.55);
       ctx.shadowBlur = minDim * 0.025;
-      drawText(ctx, text, boxW / 2, top + gradientHeight * 0.68, size, 'center', 'middle');
+      drawText(ctx, text, boxW / 2, signatureY, size, 'center', 'middle');
       ctx.restore();
     } else if (preset === 'band') {
       const bandH = Math.max(baseSize * 2.75, boxH * 0.085);
       const bandY = boxH - bandH;
+      const dateLabel = showDate ? currentDateLabel() : '';
+      const dateSize = Math.max(8, bandH * 0.2);
       ctx.save();
-      ctx.fillStyle = 'rgba(20,19,16,.76)';
+      ctx.font = `600 ${dateSize}px ${FONT_STACKS[wm.font] || FONT_STACKS.sans}`;
+      const dateWidth = dateLabel ? ctx.measureText(dateLabel).width : 0;
+      ctx.restore();
+      ctx.save();
+      ctx.fillStyle = hexToRgba(wm.bandBackground, 0.9);
       ctx.fillRect(0, bandY, boxW, bandH);
-      const size = fitFontSize(ctx, text, baseSize, boxW - margin * 2 - (state.collage.numberEnabled ? boxW * 0.1 : 0));
-      drawText(ctx, text, margin, bandY + bandH / 2, size * 0.92, 'left', 'middle');
+      if (text) {
+        const maxTextWidth = boxW - margin * 2 - (dateLabel ? dateWidth + margin : 0);
+        const size = fitFontSize(ctx, text, baseSize, maxTextWidth);
+        drawText(ctx, text, margin, bandY + bandH / 2, size * 0.92, 'left', 'middle');
+      }
+      if (dateLabel) {
+        drawText(ctx, dateLabel, boxW - margin, bandY + bandH / 2, dateSize, 'right', 'middle', 0.9);
+      }
       ctx.restore();
     } else {
       const maxWidth = boxW - margin * 2;
@@ -1271,7 +1294,7 @@
     const data = new Float64Array(width * height);
     let hasMark = false;
     for (let i = 0; i < data.length; i++) {
-      if (alpha[i] > 8) {
+      if (alpha[i] > 2) {
         data[i] = 0;
         hasMark = true;
       } else {
@@ -1295,6 +1318,69 @@
     return data;
   }
 
+  function deriveForegroundAlpha(image, width, height) {
+    const pixels = image.data;
+    const total = width * height;
+    let transparentPixels = 0;
+    for (let i = 0; i < total; i++) {
+      if (pixels[i * 4 + 3] < 245) transparentPixels++;
+    }
+    const alpha = new Uint8Array(total);
+    if (transparentPixels > total * 0.005) {
+      for (let i = 0; i < total; i++) alpha[i] = pixels[i * 4 + 3];
+      return alpha;
+    }
+
+    const histogram = new Uint32Array(64);
+    let modeBin = 0;
+    for (let i = 0; i < total; i++) {
+      const p = i * 4;
+      const luminance = Math.round(0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2]);
+      const bin = clamp(Math.floor(luminance / 4), 0, 63);
+      histogram[bin]++;
+      if (histogram[bin] > histogram[modeBin]) modeBin = bin;
+    }
+    const backgroundLuminance = modeBin * 4 + 2;
+    const contrastRange = Math.max(28, backgroundLuminance > 127 ? backgroundLuminance : 255 - backgroundLuminance);
+    for (let i = 0; i < total; i++) {
+      const p = i * 4;
+      const luminance = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
+      alpha[i] = Math.round(clamp((Math.abs(luminance - backgroundLuminance) - 4) / (contrastRange * 0.8), 0, 1) * 255);
+    }
+    return alpha;
+  }
+
+  const recolorCache = new WeakMap();
+  function recoloredImage(img, color) {
+    const cached = recolorCache.get(img);
+    if (cached?.has(color)) return cached.get(color);
+    const scale = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const source = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const alpha = deriveForegroundAlpha(source, canvas.width, canvas.height);
+    const rgb = /^#[0-9a-f]{6}$/i.test(color) ? color.slice(1) : 'ffffff';
+    const red = parseInt(rgb.slice(0, 2), 16);
+    const green = parseInt(rgb.slice(2, 4), 16);
+    const blue = parseInt(rgb.slice(4, 6), 16);
+    const output = ctx.createImageData(canvas.width, canvas.height);
+    for (let i = 0; i < alpha.length; i++) {
+      const p = i * 4;
+      output.data[p] = red;
+      output.data[p + 1] = green;
+      output.data[p + 2] = blue;
+      output.data[p + 3] = alpha[i];
+    }
+    ctx.putImageData(output, 0, 0);
+    const entries = cached || new Map();
+    entries.set(color, canvas);
+    if (!cached) recolorCache.set(img, entries);
+    return canvas;
+  }
+
   function createSilhouette(img, drawW, drawH, padding, radiusPx, maxDimension = 1600) {
     const scale = Math.min(1, maxDimension / Math.max(1, drawW + padding * 2, drawH + padding * 2));
     const canvas = document.createElement('canvas');
@@ -1303,8 +1389,7 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, padding * scale, padding * scale, drawW * scale, drawH * scale);
     const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const alpha = new Uint8Array(canvas.width * canvas.height);
-    for (let i = 0; i < alpha.length; i++) alpha[i] = image.data[i * 4 + 3];
+    const alpha = deriveForegroundAlpha(image, canvas.width, canvas.height);
     const distances = distanceTransformFromAlpha(alpha, canvas.width, canvas.height);
     if (!distances) return { canvas, scale, padding };
     const radius = Math.max(0, radiusPx * scale);
@@ -1339,58 +1424,11 @@
     ctx.restore();
   }
 
-  function snapshotCanvas(canvas) {
-    const scale = Math.min(1, 2200 / Math.max(canvas.width, canvas.height));
-    const snapshot = document.createElement('canvas');
-    snapshot.width = Math.max(1, Math.round(canvas.width * scale));
-    snapshot.height = Math.max(1, Math.round(canvas.height * scale));
-    snapshot.getContext('2d').drawImage(canvas, 0, 0, snapshot.width, snapshot.height);
-    return { canvas: snapshot, scale };
-  }
-
-  function drawBackdropBlur(ctx, snapshot, img, settings, dw, dh, effectScale) {
-    if (!settings.blurEnabled || !snapshot) return;
-    const blurPx = Math.max(0.5, settings.blurAmount * effectScale);
-    const expandPx = Math.max(0, settings.blurExpand * effectScale);
-    const padding = Math.ceil(blurPx * 2.2 + expandPx + 4);
-    const logicalW = dw + padding * 2;
-    const logicalH = dh + padding * 2;
-    const renderScale = Math.min(1, 1600 / Math.max(logicalW, logicalH));
-
-    const sampled = document.createElement('canvas');
-    sampled.width = Math.max(1, Math.round(logicalW * renderScale));
-    sampled.height = Math.max(1, Math.round(logicalH * renderScale));
-    const sampledCtx = sampled.getContext('2d');
-    const current = ctx.getTransform();
-    const inverse = current.inverse();
-    sampledCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
-    sampledCtx.translate(logicalW / 2, logicalH / 2);
-    sampledCtx.transform(inverse.a, inverse.b, inverse.c, inverse.d, inverse.e, inverse.f);
-    sampledCtx.scale(1 / snapshot.scale, 1 / snapshot.scale);
-    sampledCtx.drawImage(snapshot.canvas, 0, 0);
-    sampledCtx.setTransform(1, 0, 0, 1, 0, 0);
-
-    const blurred = document.createElement('canvas');
-    blurred.width = sampled.width;
-    blurred.height = sampled.height;
-    const blurredCtx = blurred.getContext('2d');
-    blurredCtx.filter = `blur(${Math.max(0.1, blurPx * renderScale)}px)`;
-    blurredCtx.drawImage(sampled, 0, 0);
-    blurredCtx.filter = 'none';
-
-    const silhouette = createSilhouette(img, dw, dh, padding, expandPx, 1600);
-    blurredCtx.globalCompositeOperation = 'destination-in';
-    blurredCtx.drawImage(silhouette.canvas, 0, 0, blurred.width, blurred.height);
-    blurredCtx.globalCompositeOperation = 'source-over';
-
-    ctx.save();
-    ctx.globalAlpha = clamp(settings.blurOpacity, 0, 100) / 100;
-    ctx.drawImage(blurred, -dw / 2 - padding, -dh / 2 - padding, logicalW, logicalH);
-    ctx.restore();
-  }
-
-  function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind, snapshot = null) {
+  function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind) {
     if (!img) return;
+    const renderImg = kind === 'frame' && settings.tintEnabled
+      ? recoloredImage(img, settings.tintColor)
+      : img;
     const sourceW = img.naturalWidth;
     const sourceH = img.naturalHeight;
     let dw;
@@ -1418,13 +1456,12 @@
     const effectScale = clamp(Math.min(boxW, boxH) / 2000, 0.18, 4);
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate((settings.rotate || 0) * Math.PI / 180);
+    if (kind === 'small') ctx.rotate((settings.rotate || 0) * Math.PI / 180);
 
-    drawBackdropBlur(ctx, snapshot, img, settings, dw, dh, effectScale);
     if (settings.glowEnabled) {
       drawMaskBlur(
         ctx,
-        img,
+        renderImg,
         settings.glowColor,
         settings.glowOpacity / 100,
         settings.glowBlur * effectScale,
@@ -1435,7 +1472,7 @@
     if (settings.strokeEnabled) {
       ctx.save();
       ctx.globalAlpha = 0.92;
-      drawMaskStroke(ctx, img, settings.strokeColor, settings.strokeWidth * effectScale, dw, dh);
+      drawMaskStroke(ctx, renderImg, settings.strokeColor, settings.strokeWidth * effectScale, dw, dh);
       ctx.restore();
     }
 
@@ -1448,16 +1485,14 @@
       ctx.shadowOffsetX = settings.shadowX * effectScale;
       ctx.shadowOffsetY = settings.shadowY * effectScale;
     }
-    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+    ctx.drawImage(renderImg, -dw / 2, -dh / 2, dw, dh);
     ctx.restore();
     ctx.restore();
   }
 
   function drawImportedMarks(ctx, boxW, boxH) {
-    const frameSnapshot = state.marks.frame.blurEnabled ? snapshotCanvas(ctx.canvas) : null;
-    drawCompositeAsset(ctx, state.assets.frame?.image, boxW, boxH, state.marks.frame, 'frame', frameSnapshot);
-    const smallSnapshot = state.marks.small.blurEnabled ? snapshotCanvas(ctx.canvas) : null;
-    drawCompositeAsset(ctx, state.assets.small?.image, boxW, boxH, state.marks.small, 'small', smallSnapshot);
+    drawCompositeAsset(ctx, state.assets.frame?.image, boxW, boxH, state.marks.frame, 'frame');
+    drawCompositeAsset(ctx, state.assets.small?.image, boxW, boxH, state.marks.small, 'small');
   }
 
   function watermarkLongEdge(img) {
@@ -1607,7 +1642,7 @@
       if (isSold(number)) soldOverlay(ctx, x, y, base.cellW, base.cellH);
       if (state.collage.cellMarkEnabled) {
         drawWatermark(ctx, base.cellW, base.cellH, start + slot, {
-          preset: state.watermark.preset === 'tiled' ? 'double' : state.watermark.preset,
+          preset: state.watermark.preset === 'tiled' ? 'corner' : state.watermark.preset,
           dims: { x, y, w: base.cellW, h: base.cellH },
           clip: true,
           radius: base.cellW * 0.012
@@ -1677,9 +1712,10 @@
 
   function outputFilename(pageIndex) {
     const prefix = safePrefix();
+    const extension = state.export.format === 'png' ? 'png' : 'jpg';
     return state.mode === 'watermark'
-      ? `${prefix}-${pad(pageIndex + 1, 3)}.jpg`
-      : `${prefix}-sheet-${pad(pageIndex + 1, 2)}.jpg`;
+      ? `${prefix}-${pad(pageIndex + 1, 3)}.${extension}`
+      : `${prefix}-sheet-${pad(pageIndex + 1, 2)}.${extension}`;
   }
 
   async function createOutputCanvasForPage(pageIndex) {
@@ -1695,10 +1731,11 @@
 
   function canvasToBlob(canvas) {
     return new Promise((resolve, reject) => {
+      const isPng = state.export.format === 'png';
       canvas.toBlob((blob) => {
         if (blob) resolve(blob);
         else reject(new Error('浏览器无法导出该图片'));
-      }, 'image/jpeg', state.export.quality / 100);
+      }, isPng ? 'image/png' : 'image/jpeg', isPng ? undefined : state.export.quality / 100);
     });
   }
 
@@ -1768,7 +1805,7 @@
           showProgress(true, '正在打包 ZIP…', percent);
         }
       );
-      const zipName = `${safePrefix()}-${state.mode === 'watermark' ? 'marked' : 'collages'}.zip`;
+      const zipName = `${safePrefix()}-${state.mode === 'watermark' ? 'marked' : 'collages'}-${state.export.format}.zip`;
       downloadBlob(zipBlob, zipName);
       showProgress(true, '打包完成', 100);
       toast(`已导出 ${total} 张图片`);
@@ -1787,7 +1824,8 @@
   function readWatermarkControl(control) {
     const key = control.dataset.watermark;
     if (!key) return;
-    if (control.type === 'range' || control.type === 'number') state.watermark[key] = numberOr(control.value, WATERMARK_DEFAULTS[key]);
+    if (control.type === 'checkbox') state.watermark[key] = control.checked;
+    else if (control.type === 'range' || control.type === 'number') state.watermark[key] = numberOr(control.value, WATERMARK_DEFAULTS[key]);
     else state.watermark[key] = control.value;
   }
 
@@ -1820,6 +1858,28 @@
     setPath(state.marks, path, value);
   }
 
+  function showWelcome() {
+    el.welcomeOverlay.hidden = false;
+    el.welcomeOverlay.classList.remove('is-closing');
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => el.welcomeStartBtn.focus(), 60);
+  }
+
+  function hideWelcome(markSeen = true) {
+    if (el.welcomeOverlay.hidden) return;
+    if (markSeen) {
+      try {
+        localStorage.setItem(ONBOARDING_KEY, 'seen');
+      } catch (_) { /* private mode can disable persistent storage */ }
+    }
+    el.welcomeOverlay.classList.add('is-closing');
+    document.body.style.overflow = '';
+    window.setTimeout(() => {
+      el.welcomeOverlay.hidden = true;
+      el.welcomeOverlay.classList.remove('is-closing');
+    }, 260);
+  }
+
   function bindControls() {
     el.resetSettingsBtn.addEventListener('click', resetSettings);
     el.clearImagesBtn.addEventListener('click', clearFiles);
@@ -1827,6 +1887,11 @@
     el.nextBtn.addEventListener('click', () => goPage(1));
     el.downloadCurrentBtn.addEventListener('click', downloadCurrent);
     el.exportAllBtn.addEventListener('click', exportAllZip);
+    el.showWelcomeBtn.addEventListener('click', showWelcome);
+    el.welcomeStartBtn.addEventListener('click', () => hideWelcome(true));
+    el.welcomeOverlay.addEventListener('click', (event) => {
+      if (event.target === el.welcomeOverlay) hideWelcome(true);
+    });
     el.frameChooseBtn.addEventListener('click', () => el.frameInput.click());
     el.smallChooseBtn.addEventListener('click', () => el.smallInput.click());
     el.addFullscreenBtn.addEventListener('click', () => el.fullscreenInput.click());
@@ -1910,8 +1975,14 @@
       control.addEventListener(eventName, () => {
         readExportControl(control);
         if (control.type === 'range') syncRange(control, el.exportQualityValue);
+        updateExportUi();
         persistSettings();
       });
+    });
+    el.exportEdgeLockBtn.addEventListener('click', () => {
+      state.export.edgeLocked = !state.export.edgeLocked;
+      updateExportUi();
+      persistSettings();
     });
 
     const openPicker = () => {
@@ -1948,6 +2019,10 @@
     });
 
     window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !el.welcomeOverlay.hidden) {
+        hideWelcome(true);
+        return;
+      }
       const target = event.target;
       if (target && /INPUT|SELECT|TEXTAREA/.test(target.tagName)) return;
       if (event.key === 'ArrowLeft') goPage(-1);
@@ -1975,6 +2050,11 @@
     updateActionAvailability();
     syncStageTitle();
     schedulePreview();
+    let onboardingSeen = false;
+    try {
+      onboardingSeen = localStorage.getItem(ONBOARDING_KEY) === 'seen';
+    } catch (_) { /* ignore storage restrictions */ }
+    if (!onboardingSeen) window.setTimeout(showWelcome, 120);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

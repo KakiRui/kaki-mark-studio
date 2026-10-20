@@ -10,14 +10,18 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Kaki Mark Studio 首页">
+    <div class="brand" role="img" aria-label="Kaki Mark Studio">
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="brand-copy">
         <strong>Kaki Mark Studio</strong>
         <small>image marking workspace</small>
       </span>
-    </a>
+    </div>
     <div class="top-actions">
+      <button class="icon-button" id="showWelcomeBtn" type="button" title="查看使用教程">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1 .9-1 1.6M12 17h.01"/></svg>
+        <span>教程</span>
+      </button>
       <span class="privacy-pill">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"/><path d="M12 14v2"/></svg>
         仅在本机处理
@@ -78,7 +82,7 @@
         <div class="panel-title-row">
           <div>
             <p class="overline">CONFIGURATION</p>
-            <h2>标记设置</h2>
+            <h2>水印设置</h2>
           </div>
           <span class="live-dot"><i></i> 实时预览</span>
         </div>
@@ -98,17 +102,13 @@
           <fieldset class="control-group">
             <legend>一键预设</legend>
             <div class="preset-grid">
-              <button class="preset-card active" type="button" data-preset="double">
-                <span class="preset-swatch swatch-double">Aa</span>
-                <span><strong>双层压印</strong><small>主标 + 清晰角标</small></span>
-              </button>
-              <button class="preset-card" type="button" data-preset="tiled">
+              <button class="preset-card active" type="button" data-preset="tiled">
                 <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
-                <span><strong>防盗平铺</strong><small>低调但难裁</small></span>
+                <span><strong>平铺水印</strong><small>低调但难裁</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="gradient">
                 <span class="preset-swatch swatch-gradient">KAKI</span>
-                <span><strong>渐变压印</strong><small>雾化底栏 · 居中品牌</small></span>
+                <span><strong>渐变预览</strong><small>雾化底栏 · 居中署名</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="band">
                 <span class="preset-swatch swatch-band">KAKI / 001</span>
@@ -173,8 +173,19 @@
               <input id="watermarkRotate" type="range" min="-45" max="45" step="1" value="-24" data-watermark="rotate">
             </div>
             <div>
-              <label for="watermarkGap">重复间距 <output id="watermarkGapValue">18</output></label>
-              <input id="watermarkGap" type="range" min="8" max="36" step="1" value="18" data-watermark="gap">
+              <label for="watermarkGap">重复间距 <output id="watermarkGapValue">28</output></label>
+              <input id="watermarkGap" type="range" min="8" max="48" step="1" value="28" data-watermark="gap">
+            </div>
+          </div>
+
+          <div class="control-group compact-grid two-up" id="bandOptions" hidden>
+            <div class="color-field">
+              <label for="bandBackground">底栏颜色</label>
+              <input id="bandBackground" type="color" value="#141310" data-watermark="bandBackground">
+            </div>
+            <div>
+              <label>右下日期</label>
+              <label class="check-line"><input id="bandDateEnabled" type="checkbox" data-watermark="bandDateEnabled"> 显示当前日期</label>
             </div>
           </div>
 
@@ -236,7 +247,7 @@
               <b id="frameStatus">未导入</b>
             </summary>
             <div class="module-body">
-              <p class="module-lead">导入透明水印框后，可调节尺寸与位置，并为边缘添加投影、外发光、平滑描边或底图柔化边框。</p>
+              <p class="module-lead">导入透明水印框后，可调节尺寸、位置与颜色，并为边缘添加投影、外发光或平滑描边。</p>
               <input type="file" id="frameInput" accept="image/*" hidden>
               <div class="asset-empty" id="frameEmpty">
                 <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
@@ -271,11 +282,12 @@
                       <option value="darken">变暗</option>
                     </select>
                   </div>
-                  <div>
-                    <label for="frameRotate">旋转 <output data-value-for="frame.rotate">0°</output></label>
-                    <input id="frameRotate" type="range" min="-45" max="45" step="1" value="0" data-mark="frame.rotate">
+                  <div class="color-field">
+                    <label for="frameTintColor">统一改色</label>
+                    <input id="frameTintColor" type="color" value="#ffffff" data-mark="frame.tintColor">
                   </div>
                 </div>
+                <label class="check-line frame-tint-toggle"><input id="frameTintEnabled" type="checkbox" data-mark="frame.tintEnabled"> 将水印框替换为所选颜色</label>
                 <div class="control-group compact-grid two-up">
                   <div>
                     <label for="frameX">左右位置 <output data-value-for="frame.x">0%</output></label>
@@ -356,26 +368,6 @@
                     </div>
                   </div>
 
-                  <div class="effect-row">
-                    <label><input type="checkbox" id="frameBlurEnabled" data-mark="frame.blurEnabled"> 柔化模糊边</label>
-                    <span>给水印框垫一层模糊色边</span>
-                  </div>
-                  <div class="effect-controls" id="frameBlurControls" hidden>
-                    <div class="two-up">
-                      <div>
-                        <label for="frameBlurAmount">模糊强度 <output data-value-for="frame.blurAmount" data-suffix="px">24px</output></label>
-                        <input id="frameBlurAmount" type="range" min="1" max="120" step="1" value="24" data-mark="frame.blurAmount">
-                      </div>
-                      <div>
-                        <label for="frameBlurExpand">扩展边缘 <output data-value-for="frame.blurExpand" data-suffix="px">7px</output></label>
-                        <input id="frameBlurExpand" type="range" min="0" max="60" step="0.5" value="7" data-mark="frame.blurExpand">
-                      </div>
-                    </div>
-                    <div>
-                      <label for="frameBlurOpacity">底纹浓度 <output data-value-for="frame.blurOpacity" data-suffix="%">62%</output></label>
-                      <input id="frameBlurOpacity" type="range" min="0" max="100" step="1" value="62" data-mark="frame.blurOpacity">
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -523,26 +515,6 @@
                     </div>
                   </div>
 
-                  <div class="effect-row">
-                    <label><input type="checkbox" id="smallBlurEnabled" data-mark="small.blurEnabled"> 柔化模糊底</label>
-                    <span>在透明 Logo 后方加色雾</span>
-                  </div>
-                  <div class="effect-controls" id="smallBlurControls" hidden>
-                    <div class="two-up">
-                      <div>
-                        <label for="smallBlurAmount">模糊强度 <output data-value-for="small.blurAmount" data-suffix="px">12px</output></label>
-                        <input id="smallBlurAmount" type="range" min="1" max="80" step="0.5" value="12" data-mark="small.blurAmount">
-                      </div>
-                      <div>
-                        <label for="smallBlurExpand">扩展边缘 <output data-value-for="small.blurExpand" data-suffix="px">4px</output></label>
-                        <input id="smallBlurExpand" type="range" min="0" max="40" step="0.5" value="4" data-mark="small.blurExpand">
-                      </div>
-                    </div>
-                    <div>
-                      <label for="smallBlurOpacity">底纹浓度 <output data-value-for="small.blurOpacity" data-suffix="%">66%</output></label>
-                      <input id="smallBlurOpacity" type="range" min="0" max="100" step="1" value="66" data-mark="small.blurOpacity">
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -623,30 +595,6 @@
           <p class="tip-box"><span>提示</span> 空白格会保留为画布底色，确保每一页尺寸一致，方便直接发布。</p>
         </div>
 
-        <details class="export-settings" open>
-          <summary>导出设置 <span>JPEG / ZIP</span></summary>
-          <div class="details-body">
-            <div class="two-up">
-              <div>
-                <label for="exportEdge">长边像素</label>
-                <select id="exportEdge" data-export="edge">
-                  <option value="1600">1600 px</option>
-                  <option value="2400">2400 px</option>
-                  <option value="3200">3200 px</option>
-                  <option value="4000">4000 px</option>
-                </select>
-              </div>
-              <div>
-                <label for="exportQuality">JPEG 画质 <output id="exportQualityValue">92%</output></label>
-                <input id="exportQuality" type="range" min="70" max="100" step="1" value="92" data-export="quality">
-              </div>
-            </div>
-            <div class="field-block">
-              <label for="filePrefix">文件名前缀</label>
-              <input id="filePrefix" type="text" maxlength="30" value="kaki" data-export="prefix">
-            </div>
-          </div>
-        </details>
       </aside>
 
       <section class="stage panel" aria-labelledby="stageTitle">
@@ -675,6 +623,39 @@
             <small>图片只在当前浏览器内处理</small>
           </div>
         </div>
+
+        <details class="stage-export-settings" open>
+          <summary><span>导出设置</span><small>统一输出参数</small></summary>
+          <div class="stage-export-grid">
+            <div>
+              <label for="exportFormat">图片格式</label>
+              <select id="exportFormat" data-export="format">
+                <option value="jpeg">JPEG · 文件更小</option>
+                <option value="png">PNG · 无损画质</option>
+              </select>
+            </div>
+            <div>
+              <label for="exportEdge">长边像素 <em id="exportEdgeState">已锁定</em></label>
+              <div class="locked-control">
+                <select id="exportEdge" data-export="edge" disabled>
+                  <option value="1600">1600 px</option>
+                  <option value="2400" selected>2400 px</option>
+                  <option value="3200">3200 px</option>
+                  <option value="4000">4000 px</option>
+                </select>
+                <button class="button secondary compact" id="exportEdgeLockBtn" type="button">解锁</button>
+              </div>
+            </div>
+            <div id="exportQualityRow">
+              <label for="exportQuality">JPEG 画质 <output id="exportQualityValue">92%</output></label>
+              <input id="exportQuality" type="range" min="70" max="100" step="1" value="92" data-export="quality">
+            </div>
+            <div>
+              <label for="filePrefix">文件名前缀</label>
+              <input id="filePrefix" type="text" maxlength="30" value="kaki" data-export="prefix">
+            </div>
+          </div>
+        </details>
 
         <div class="stage-actions">
           <div class="pager" id="pager">
@@ -711,6 +692,24 @@
       <span>Built for makers.</span>
     </footer>
   </main>
+
+  <section class="welcome-overlay" id="welcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" hidden>
+    <div class="welcome-card">
+      <div class="welcome-grid-mark" aria-hidden="true"></div>
+      <p class="welcome-kicker">A SMALL GUIDE BEFORE YOU START</p>
+      <h2 id="welcomeTitle">先把水印，<br><em>做成作品的一部分。</em></h2>
+      <p class="welcome-lead">三步完成整套作品，所有图片只在当前浏览器里处理。</p>
+      <ol class="welcome-steps">
+        <li><span>01</span><div><strong>导入作品</strong><small>一次拖入多张 JPG、PNG 或 WEBP。</small></div></li>
+        <li><span>02</span><div><strong>组合水印</strong><small>选择预设，再叠加底纹、水印框或小水印。</small></div></li>
+        <li><span>03</span><div><strong>批量带走</strong><small>实时预览，最后下载 JPEG 或 PNG。</small></div></li>
+      </ol>
+      <div class="welcome-footer">
+        <span>本机处理 · 不上传图片</span>
+        <button class="button primary" id="welcomeStartBtn" type="button">开始制作</button>
+      </div>
+    </div>
+  </section>
 
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
