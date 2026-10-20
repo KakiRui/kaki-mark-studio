@@ -98,17 +98,17 @@
           <fieldset class="control-group">
             <legend>一键预设</legend>
             <div class="preset-grid">
-              <button class="preset-card active" type="button" data-preset="corner">
-                <span class="preset-swatch swatch-corner">Aa</span>
-                <span><strong>角落署名</strong><small>克制、日常</small></span>
+              <button class="preset-card active" type="button" data-preset="double">
+                <span class="preset-swatch swatch-double">Aa</span>
+                <span><strong>双层压印</strong><small>主标 + 清晰角标</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="tiled">
                 <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
                 <span><strong>防盗平铺</strong><small>低调但难裁</small></span>
               </button>
-              <button class="preset-card" type="button" data-preset="center">
-                <span class="preset-swatch swatch-center">Aa</span>
-                <span><strong>中央品牌</strong><small>适合封面</small></span>
+              <button class="preset-card" type="button" data-preset="gradient">
+                <span class="preset-swatch swatch-gradient">KAKI</span>
+                <span><strong>渐变压印</strong><small>雾化底栏 · 居中品牌</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="band">
                 <span class="preset-swatch swatch-band">KAKI / 001</span>
@@ -116,6 +116,22 @@
               </button>
             </div>
           </fieldset>
+
+          <div class="control-group compact-grid two-up" id="gradientOptions" hidden>
+            <div class="color-field">
+              <label for="gradientColor">渐变底色</label>
+              <input id="gradientColor" type="color" value="#141412" data-watermark="gradientColor">
+            </div>
+            <div>
+              <label for="gradientStrength">渐变浓度 <output id="gradientStrengthValue">92%</output></label>
+              <input id="gradientStrength" type="range" min="10" max="100" step="1" value="92" data-watermark="gradientStrength">
+            </div>
+          </div>
+
+          <div class="control-group" id="gradientHeightOptions" hidden>
+            <label for="gradientHeight">渐变高度 <output id="gradientHeightValue">48%</output></label>
+            <input id="gradientHeight" type="range" min="15" max="75" step="1" value="48" data-watermark="gradientHeight">
+          </div>
 
           <div class="field-block">
             <label for="watermarkText">水印文字</label>
@@ -186,6 +202,348 @@
               <div>
                 <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
                 <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="mark-workspace">
+          <div class="mark-workspace-heading">
+            <span>IMAGE MARKS</span>
+            <p>下列图层同时作用于单图与目录拼图</p>
+          </div>
+
+          <details class="mark-module" open>
+            <summary>
+              <span><strong>全屏水印设置</strong><small>透明底纹 / 纹理叠加</small></span>
+              <b id="fullscreenCount">0 层</b>
+            </summary>
+            <div class="module-body">
+              <p class="module-lead">导入透明底的底纹、纸纹或防盗图案，可叠加多层，并分别控制混合方式、不透明度与拼图前后的位置。</p>
+              <div class="asset-action-row">
+                <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>
+                <button class="button secondary compact" id="addFullscreenBtn" type="button">导入全屏水印</button>
+                <span>支持 PNG / WEBP · 最多 8 层</span>
+              </div>
+              <div class="layer-list" id="fullscreenList"></div>
+              <p class="module-note" id="fullscreenPlacementNote">单图水印模式会把所有底纹叠加在照片上。</p>
+            </div>
+          </details>
+
+          <details class="mark-module">
+            <summary>
+              <span><strong>水印框设置</strong><small>边框 / 画框 / 装饰层</small></span>
+              <b id="frameStatus">未导入</b>
+            </summary>
+            <div class="module-body">
+              <p class="module-lead">导入透明水印框后，可调节尺寸与位置，并为边缘添加投影、外发光、描边或柔化模糊边。</p>
+              <input type="file" id="frameInput" accept="image/*" hidden>
+              <div class="asset-empty" id="frameEmpty">
+                <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
+                <button class="button secondary compact" id="frameChooseBtn" type="button">导入水印框</button>
+              </div>
+              <div id="frameEditor" hidden>
+                <div class="asset-summary">
+                  <span class="asset-thumb"><img id="frameThumb" alt=""></span>
+                  <div><strong id="frameName">水印框</strong><span>已作为最上层画框合成</span></div>
+                  <button class="text-button danger" id="frameRemoveBtn" type="button">移除</button>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="frameScale">尺寸 <output data-value-for="frame.scale">100%</output></label>
+                    <input id="frameScale" type="range" min="10" max="120" step="1" value="100" data-mark="frame.scale">
+                  </div>
+                  <div>
+                    <label for="frameOpacity">不透明度 <output data-value-for="frame.opacity">100%</output></label>
+                    <input id="frameOpacity" type="range" min="5" max="100" step="1" value="100" data-mark="frame.opacity">
+                  </div>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="frameBlend">混合模式</label>
+                    <select id="frameBlend" data-mark="frame.blend">
+                      <option value="normal">正常</option>
+                      <option value="soft-light">柔光</option>
+                      <option value="screen">滤色</option>
+                      <option value="multiply">正片叠底</option>
+                      <option value="overlay">叠加</option>
+                      <option value="lighten">变亮</option>
+                      <option value="darken">变暗</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="frameRotate">旋转 <output data-value-for="frame.rotate">0°</output></label>
+                    <input id="frameRotate" type="range" min="-45" max="45" step="1" value="0" data-mark="frame.rotate">
+                  </div>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="frameX">左右位置 <output data-value-for="frame.x">0%</output></label>
+                    <input id="frameX" type="range" min="-50" max="50" step="1" value="0" data-mark="frame.x">
+                  </div>
+                  <div>
+                    <label for="frameY">上下位置 <output data-value-for="frame.y">0%</output></label>
+                    <input id="frameY" type="range" min="-50" max="50" step="1" value="0" data-mark="frame.y">
+                  </div>
+                </div>
+                <div class="effect-stack">
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="frameShadowEnabled" data-mark="frame.shadowEnabled" checked> 投影</label>
+                    <span>让它和画面产生层次</span>
+                  </div>
+                  <div class="effect-controls" id="frameShadowControls">
+                    <div class="two-up">
+                      <div>
+                        <label for="frameShadowColor">阴影颜色</label>
+                        <input id="frameShadowColor" type="color" value="#000000" data-mark="frame.shadowColor">
+                      </div>
+                      <div>
+                        <label for="frameShadowOpacity">阴影浓度 <output data-value-for="frame.shadowOpacity">32%</output></label>
+                        <input id="frameShadowOpacity" type="range" min="0" max="100" step="1" value="32" data-mark="frame.shadowOpacity">
+                      </div>
+                    </div>
+                    <div class="two-up">
+                      <div>
+                        <label for="frameShadowBlur">模糊 <output data-value-for="frame.shadowBlur">5%</output></label>
+                        <input id="frameShadowBlur" type="range" min="0" max="20" step="0.5" value="5" data-mark="frame.shadowBlur">
+                      </div>
+                      <div>
+                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX">1%</output></label>
+                        <input id="frameShadowX" type="range" min="-12" max="12" step="0.5" value="1" data-mark="frame.shadowX">
+                      </div>
+                    </div>
+                    <div>
+                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY">2%</output></label>
+                      <input id="frameShadowY" type="range" min="-12" max="12" step="0.5" value="2" data-mark="frame.shadowY">
+                    </div>
+                  </div>
+
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="frameGlowEnabled" data-mark="frame.glowEnabled"> 外发光</label>
+                    <span>沿透明边缘发光</span>
+                  </div>
+                  <div class="effect-controls" id="frameGlowControls" hidden>
+                    <div class="two-up">
+                      <div>
+                        <label for="frameGlowColor">发光颜色</label>
+                        <input id="frameGlowColor" type="color" value="#ffffff" data-mark="frame.glowColor">
+                      </div>
+                      <div>
+                        <label for="frameGlowOpacity">发光浓度 <output data-value-for="frame.glowOpacity">48%</output></label>
+                        <input id="frameGlowOpacity" type="range" min="0" max="100" step="1" value="48" data-mark="frame.glowOpacity">
+                      </div>
+                    </div>
+                    <div>
+                      <label for="frameGlowBlur">发光范围 <output data-value-for="frame.glowBlur">8%</output></label>
+                      <input id="frameGlowBlur" type="range" min="0" max="30" step="0.5" value="8" data-mark="frame.glowBlur">
+                    </div>
+                  </div>
+
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="frameStrokeEnabled" data-mark="frame.strokeEnabled"> 描边</label>
+                    <span>勾勒透明图形的外轮廓</span>
+                  </div>
+                  <div class="effect-controls" id="frameStrokeControls" hidden>
+                    <div class="two-up">
+                      <div>
+                        <label for="frameStrokeColor">描边颜色</label>
+                        <input id="frameStrokeColor" type="color" value="#ffffff" data-mark="frame.strokeColor">
+                      </div>
+                      <div>
+                        <label for="frameStrokeWidth">描边粗细 <output data-value-for="frame.strokeWidth">1.5%</output></label>
+                        <input id="frameStrokeWidth" type="range" min="0.2" max="6" step="0.1" value="1.5" data-mark="frame.strokeWidth">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="frameBlurEnabled" data-mark="frame.blurEnabled"> 柔化模糊边</label>
+                    <span>给水印框垫一层模糊色边</span>
+                  </div>
+                  <div class="effect-controls" id="frameBlurControls" hidden>
+                    <div class="two-up">
+                      <div>
+                        <label for="frameBlurColor">柔边颜色</label>
+                        <input id="frameBlurColor" type="color" value="#ffffff" data-mark="frame.blurColor">
+                      </div>
+                      <div>
+                        <label for="frameBlurOpacity">柔边浓度 <output data-value-for="frame.blurOpacity">40%</output></label>
+                        <input id="frameBlurOpacity" type="range" min="0" max="100" step="1" value="40" data-mark="frame.blurOpacity">
+                      </div>
+                    </div>
+                    <div>
+                      <label for="frameBlurWidth">模糊边粗细 <output data-value-for="frame.blurWidth">7%</output></label>
+                      <input id="frameBlurWidth" type="range" min="0.5" max="20" step="0.5" value="7" data-mark="frame.blurWidth">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="mark-module">
+            <summary>
+              <span><strong>小水印设置</strong><small>Logo / 签名 / 角标</small></span>
+              <b id="smallStatus">未导入</b>
+            </summary>
+            <div class="module-body">
+              <p class="module-lead">导入 Logo 或小签名，独立调整尺寸、九个落点与上下左右偏移，并可继续叠混合模式与图形效果。</p>
+              <input type="file" id="smallInput" accept="image/*" hidden>
+              <div class="asset-empty" id="smallEmpty">
+                <div><strong>还没有小水印</strong><span>可以导入带透明通道的 Logo</span></div>
+                <button class="button secondary compact" id="smallChooseBtn" type="button">导入小水印</button>
+              </div>
+              <div id="smallEditor" hidden>
+                <div class="asset-summary">
+                  <span class="asset-thumb"><img id="smallThumb" alt=""></span>
+                  <div><strong id="smallName">小水印</strong><span>已作为独立角标合成</span></div>
+                  <button class="text-button danger" id="smallRemoveBtn" type="button">移除</button>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="smallScale">尺寸 <output data-value-for="small.scale">18%</output></label>
+                    <input id="smallScale" type="range" min="3" max="70" step="1" value="18" data-mark="small.scale">
+                  </div>
+                  <div>
+                    <label for="smallOpacity">不透明度 <output data-value-for="small.opacity">90%</output></label>
+                    <input id="smallOpacity" type="range" min="5" max="100" step="1" value="90" data-mark="small.opacity">
+                  </div>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="smallBlend">混合模式</label>
+                    <select id="smallBlend" data-mark="small.blend">
+                      <option value="normal">正常</option>
+                      <option value="soft-light">柔光</option>
+                      <option value="screen">滤色</option>
+                      <option value="multiply">正片叠底</option>
+                      <option value="overlay">叠加</option>
+                      <option value="lighten">变亮</option>
+                      <option value="darken">变暗</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="smallAnchor">落点</label>
+                    <select id="smallAnchor" data-mark="small.anchor">
+                      <option value="tl">左上</option>
+                      <option value="tc">上方居中</option>
+                      <option value="tr">右上</option>
+                      <option value="ml">左侧居中</option>
+                      <option value="mc">正中</option>
+                      <option value="mr">右侧居中</option>
+                      <option value="bl">左下</option>
+                      <option value="bc">下方居中</option>
+                      <option value="br" selected>右下</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="smallX">左右偏移 <output data-value-for="small.x">4%</output></label>
+                    <input id="smallX" type="range" min="-45" max="45" step="1" value="4" data-mark="small.x">
+                  </div>
+                  <div>
+                    <label for="smallY">上下偏移 <output data-value-for="small.y">4%</output></label>
+                    <input id="smallY" type="range" min="-45" max="45" step="1" value="4" data-mark="small.y">
+                  </div>
+                </div>
+                <div class="control-group compact-grid two-up">
+                  <div>
+                    <label for="smallRotate">旋转 <output data-value-for="small.rotate">0°</output></label>
+                    <input id="smallRotate" type="range" min="-45" max="45" step="1" value="0" data-mark="small.rotate">
+                  </div>
+                </div>
+                <div class="effect-stack">
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="smallShadowEnabled" data-mark="small.shadowEnabled" checked> 投影</label>
+                    <span>提升小水印可读性</span>
+                  </div>
+                  <div class="effect-controls" id="smallShadowControls">
+                    <div class="two-up">
+                      <div>
+                        <label for="smallShadowColor">阴影颜色</label>
+                        <input id="smallShadowColor" type="color" value="#000000" data-mark="small.shadowColor">
+                      </div>
+                      <div>
+                        <label for="smallShadowOpacity">阴影浓度 <output data-value-for="small.shadowOpacity">42%</output></label>
+                        <input id="smallShadowOpacity" type="range" min="0" max="100" step="1" value="42" data-mark="small.shadowOpacity">
+                      </div>
+                    </div>
+                    <div class="two-up">
+                      <div>
+                        <label for="smallShadowBlur">模糊 <output data-value-for="small.shadowBlur">8%</output></label>
+                        <input id="smallShadowBlur" type="range" min="0" max="30" step="0.5" value="8" data-mark="small.shadowBlur">
+                      </div>
+                      <div>
+                        <label for="smallShadowX">水平距离 <output data-value-for="small.shadowX">1.5%</output></label>
+                        <input id="smallShadowX" type="range" min="-15" max="15" step="0.5" value="1.5" data-mark="small.shadowX">
+                      </div>
+                    </div>
+                    <div>
+                      <label for="smallShadowY">垂直距离 <output data-value-for="small.shadowY">2%</output></label>
+                      <input id="smallShadowY" type="range" min="-15" max="15" step="0.5" value="2" data-mark="small.shadowY">
+                    </div>
+                  </div>
+
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="smallGlowEnabled" data-mark="small.glowEnabled"> 外发光</label>
+                    <span>在 Logo 外缘扩散颜色</span>
+                  </div>
+                  <div class="effect-controls" id="smallGlowControls" hidden>
+                    <div class="two-up">
+                      <div>
+                        <label for="smallGlowColor">发光颜色</label>
+                        <input id="smallGlowColor" type="color" value="#ffffff" data-mark="small.glowColor">
+                      </div>
+                      <div>
+                        <label for="smallGlowOpacity">发光浓度 <output data-value-for="small.glowOpacity">50%</output></label>
+                        <input id="smallGlowOpacity" type="range" min="0" max="100" step="1" value="50" data-mark="small.glowOpacity">
+                      </div>
+                    </div>
+                    <div>
+                      <label for="smallGlowBlur">发光范围 <output data-value-for="small.glowBlur">12%</output></label>
+                      <input id="smallGlowBlur" type="range" min="0" max="40" step="0.5" value="12" data-mark="small.glowBlur">
+                    </div>
+                  </div>
+
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="smallStrokeEnabled" data-mark="small.strokeEnabled"> 描边</label>
+                    <span>增强透明图案轮廓</span>
+                  </div>
+                  <div class="effect-controls" id="smallStrokeControls" hidden>
+                    <div class="two-up">
+                      <div>
+                        <label for="smallStrokeColor">描边颜色</label>
+                        <input id="smallStrokeColor" type="color" value="#ffffff" data-mark="small.strokeColor">
+                      </div>
+                      <div>
+                        <label for="smallStrokeWidth">描边粗细 <output data-value-for="small.strokeWidth">2%</output></label>
+                        <input id="smallStrokeWidth" type="range" min="0.2" max="8" step="0.1" value="2" data-mark="small.strokeWidth">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="effect-row">
+                    <label><input type="checkbox" id="smallBlurEnabled" data-mark="small.blurEnabled"> 柔化模糊底</label>
+                    <span>在透明 Logo 后方加色雾</span>
+                  </div>
+                  <div class="effect-controls" id="smallBlurControls" hidden>
+                    <div class="two-up">
+                      <div>
+                        <label for="smallBlurColor">柔底颜色</label>
+                        <input id="smallBlurColor" type="color" value="#ffffff" data-mark="small.blurColor">
+                      </div>
+                      <div>
+                        <label for="smallBlurOpacity">柔底浓度 <output data-value-for="small.blurOpacity">46%</output></label>
+                        <input id="smallBlurOpacity" type="range" min="0" max="100" step="1" value="46" data-mark="small.blurOpacity">
+                      </div>
+                    </div>
+                    <div>
+                      <label for="smallBlurWidth">模糊底粗细 <output data-value-for="small.blurWidth">10%</output></label>
+                      <input id="smallBlurWidth" type="range" min="0.5" max="30" step="0.5" value="10" data-mark="small.blurWidth">
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </details>

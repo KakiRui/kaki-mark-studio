@@ -2,12 +2,13 @@
   'use strict';
 
   const MAX_FILES = 80;
+  const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
   const STORAGE_KEY = 'kaki-mark-studio-settings-v1';
   const PREVIEW_EDGE = 1500;
 
   const WATERMARK_DEFAULTS = Object.freeze({
-    preset: 'corner',
+    preset: 'double',
     text: 'KAKI STUDIO',
     size: 3.2,
     opacity: 82,
@@ -18,7 +19,10 @@
     font: 'sans',
     color: '#ffffff',
     strokeColor: '#111111',
-    stroke: 0
+    stroke: 0,
+    gradientColor: '#141412',
+    gradientStrength: 92,
+    gradientHeight: 48
   });
 
   const COLLAGE_DEFAULTS = Object.freeze({
@@ -43,11 +47,78 @@
   });
 
   const PRESETS = Object.freeze({
-    corner: { opacity: 82, size: 3.2, stroke: 0 },
+    double: { opacity: 82, size: 3.2, stroke: 0 },
     tiled: { opacity: 18, size: 3.8, stroke: 0 },
-    center: { opacity: 72, size: 7.4, stroke: 0 },
+    gradient: { opacity: 94, size: 5.2, stroke: 0, gradientStrength: 92, gradientHeight: 48 },
     band: { opacity: 92, size: 3.5, stroke: 0 }
   });
+
+  const PRESET_ALIASES = { corner: 'double', center: 'gradient' };
+
+  const FRAME_DEFAULTS = Object.freeze({
+    scale: 100,
+    opacity: 100,
+    blend: 'normal',
+    x: 0,
+    y: 0,
+    rotate: 0,
+    shadowEnabled: true,
+    shadowColor: '#000000',
+    shadowOpacity: 32,
+    shadowBlur: 5,
+    shadowX: 1,
+    shadowY: 2,
+    glowEnabled: false,
+    glowColor: '#ffffff',
+    glowOpacity: 48,
+    glowBlur: 8,
+    strokeEnabled: false,
+    strokeColor: '#ffffff',
+    strokeWidth: 1.5,
+    blurEnabled: false,
+    blurColor: '#ffffff',
+    blurOpacity: 40,
+    blurWidth: 7
+  });
+
+  const SMALL_DEFAULTS = Object.freeze({
+    scale: 18,
+    opacity: 90,
+    blend: 'normal',
+    anchor: 'br',
+    x: 4,
+    y: 4,
+    rotate: 0,
+    shadowEnabled: true,
+    shadowColor: '#000000',
+    shadowOpacity: 42,
+    shadowBlur: 8,
+    shadowX: 1.5,
+    shadowY: 2,
+    glowEnabled: false,
+    glowColor: '#ffffff',
+    glowOpacity: 50,
+    glowBlur: 12,
+    strokeEnabled: false,
+    strokeColor: '#ffffff',
+    strokeWidth: 2,
+    blurEnabled: false,
+    blurColor: '#ffffff',
+    blurOpacity: 46,
+    blurWidth: 10
+  });
+
+  const BLEND_MODES = Object.freeze({
+    normal: 'source-over',
+    multiply: 'multiply',
+    screen: 'screen',
+    overlay: 'overlay',
+    'soft-light': 'soft-light',
+    lighten: 'lighten',
+    darken: 'darken'
+  });
+
+  const FULLSCREEN_BLENDS = ['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'lighten', 'darken'];
 
   const FONT_STACKS = {
     sans: '"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",sans-serif',
@@ -61,6 +132,15 @@
     mode: 'watermark',
     watermark: { ...WATERMARK_DEFAULTS },
     collage: { ...COLLAGE_DEFAULTS },
+    marks: {
+      frame: { ...FRAME_DEFAULTS },
+      small: { ...SMALL_DEFAULTS }
+    },
+    assets: {
+      fullscreen: [],
+      frame: null,
+      small: null
+    },
     export: { ...EXPORT_DEFAULTS },
     busy: false,
     previewToken: 0,
@@ -78,6 +158,21 @@
   };
   const pad = (n, len = 2) => String(n).padStart(len, '0');
   const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const hexToRgba = (hex, alpha = 1) => {
+    const value = String(hex || '#000000').replace('#', '');
+    const safe = /^[0-9a-f]{6}$/i.test(value) ? value : '000000';
+    const r = parseInt(safe.slice(0, 2), 16);
+    const g = parseInt(safe.slice(2, 4), 16);
+    const b = parseInt(safe.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${clamp(alpha, 0, 1)})`;
+  };
+  const getPath = (object, path) => path.split('.').reduce((value, key) => value && value[key], object);
+  const setPath = (object, path, value) => {
+    const keys = path.split('.');
+    const last = keys.pop();
+    const target = keys.reduce((node, key) => node[key], object);
+    target[last] = value;
+  };
 
   function cacheEls() {
     const ids = [
@@ -87,19 +182,27 @@
       'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkRotate',
       'watermarkRotateValue','watermarkGap','watermarkGapValue','watermarkFont','watermarkColor',
       'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions','tiledOptions',
+      'gradientColor','gradientStrength','gradientStrengthValue','gradientHeight',
+      'gradientHeightValue','gradientOptions','gradientHeightOptions',
       'collageRatio','collageRows','collageCols','collageGap','collageGapValue','collageBg',
       'numberEnabled','numberStart','numberPosition','soldEnabled','soldOptions','soldNumbers',
       'remainingMode','cellMarkEnabled','exportEdge','exportQuality','exportQualityValue','filePrefix',
       'stageTitle','previewMeta','previewSurface','previewCanvas','emptyState',
       'emptySelectBtn','prevBtn','nextBtn','pagerLabel','downloadCurrentBtn','exportAllBtn',
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
-      'numberOptions'
+      'numberOptions','fullscreenCount','fullscreenInput','addFullscreenBtn','fullscreenList',
+      'fullscreenPlacementNote','frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
+      'frameName','frameRemoveBtn','frameShadowControls','frameGlowControls','frameStrokeControls',
+      'frameBlurControls','frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
+      'smallThumb','smallName','smallRemoveBtn','smallShadowControls','smallGlowControls',
+      'smallStrokeControls','smallBlurControls','smallStatus'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
     el.presetCards = Array.from(document.querySelectorAll('[data-preset]'));
     el.modeTabs = Array.from(document.querySelectorAll('[data-mode]'));
     el.watermarkControls = Array.from(document.querySelectorAll('[data-watermark]'));
     el.collageControls = Array.from(document.querySelectorAll('[data-collage]'));
+    el.markControls = Array.from(document.querySelectorAll('[data-mark]'));
     el.exportControls = Array.from(document.querySelectorAll('[data-export]'));
   }
 
@@ -133,8 +236,16 @@
     syncRange(el.watermarkRotate, el.watermarkRotateValue, '°');
     syncRange(el.watermarkGap, el.watermarkGapValue, '');
     syncRange(el.watermarkStroke, el.watermarkStrokeValue);
+    syncRange(el.gradientStrength, el.gradientStrengthValue);
+    syncRange(el.gradientHeight, el.gradientHeightValue);
     syncRange(el.collageGap, el.collageGapValue);
     syncRange(el.exportQuality, el.exportQualityValue);
+    document.querySelectorAll('[data-value-for]').forEach((output) => {
+      const key = output.dataset.valueFor;
+      const control = el.markControls.find((item) => item.dataset.mark === key && item.type === 'range');
+      if (!control) return;
+      syncRange(control, output, key.endsWith('.rotate') ? '°' : '%');
+    });
   }
 
   function applyUiFromState() {
@@ -149,6 +260,9 @@
     el.watermarkColor.value = state.watermark.color;
     el.strokeColor.value = state.watermark.strokeColor;
     el.watermarkStroke.value = state.watermark.stroke;
+    el.gradientColor.value = state.watermark.gradientColor;
+    el.gradientStrength.value = state.watermark.gradientStrength;
+    el.gradientHeight.value = state.watermark.gradientHeight;
 
     el.collageRatio.value = state.collage.ratio;
     el.collageRows.value = state.collage.rows;
@@ -180,11 +294,20 @@
 
     el.numberOptions.hidden = !state.collage.numberEnabled;
     el.soldOptions.hidden = !state.collage.soldEnabled;
-    el.cornerOptions.hidden = state.watermark.preset === 'tiled' || state.watermark.preset === 'band';
+    el.cornerOptions.hidden = ['tiled','band','gradient'].includes(state.watermark.preset);
     el.tiledOptions.hidden = state.watermark.preset !== 'tiled';
+    el.gradientOptions.hidden = state.watermark.preset !== 'gradient';
+    el.gradientHeightOptions.hidden = state.watermark.preset !== 'gradient';
+
+    el.markControls.forEach((control) => {
+      const value = getPath(state.marks, control.dataset.mark);
+      if (control.type === 'checkbox') control.checked = Boolean(value);
+      else if (value !== undefined) control.value = value;
+    });
 
     syncAllRanges();
     syncStageTitle();
+    renderMarkModules();
     updateActionAvailability();
   }
 
@@ -201,6 +324,7 @@
       const payload = {
         watermark: state.watermark,
         collage: state.collage,
+        marks: state.marks,
         export: state.export,
         mode: state.mode
       };
@@ -215,6 +339,10 @@
       const data = JSON.parse(raw);
       if (data.watermark && typeof data.watermark === 'object') Object.assign(state.watermark, data.watermark);
       if (data.collage && typeof data.collage === 'object') Object.assign(state.collage, data.collage);
+      if (data.marks && typeof data.marks === 'object') {
+        if (data.marks.frame) Object.assign(state.marks.frame, data.marks.frame);
+        if (data.marks.small) Object.assign(state.marks.small, data.marks.small);
+      }
       if (data.export && typeof data.export === 'object') Object.assign(state.export, data.export);
       if (data.mode === 'collage' || data.mode === 'watermark') state.mode = data.mode;
       sanitizeState();
@@ -230,11 +358,15 @@
     wm.rotate = clamp(numberOr(wm.rotate, WATERMARK_DEFAULTS.rotate), -45, 45);
     wm.gap = clamp(numberOr(wm.gap, WATERMARK_DEFAULTS.gap), 8, 36);
     wm.stroke = clamp(numberOr(wm.stroke, WATERMARK_DEFAULTS.stroke), 0, 12);
+    wm.gradientStrength = clamp(numberOr(wm.gradientStrength, WATERMARK_DEFAULTS.gradientStrength), 10, 100);
+    wm.gradientHeight = clamp(numberOr(wm.gradientHeight, WATERMARK_DEFAULTS.gradientHeight), 15, 75);
+    if (PRESET_ALIASES[wm.preset]) wm.preset = PRESET_ALIASES[wm.preset];
     if (!PRESETS[wm.preset]) wm.preset = WATERMARK_DEFAULTS.preset;
     if (!FONT_STACKS[wm.font]) wm.font = WATERMARK_DEFAULTS.font;
     if (!['br','bl','tr','tl','center'].includes(wm.position)) wm.position = WATERMARK_DEFAULTS.position;
     if (!/^#[0-9a-f]{6}$/i.test(wm.color)) wm.color = WATERMARK_DEFAULTS.color;
     if (!/^#[0-9a-f]{6}$/i.test(wm.strokeColor)) wm.strokeColor = WATERMARK_DEFAULTS.strokeColor;
+    if (!/^#[0-9a-f]{6}$/i.test(wm.gradientColor)) wm.gradientColor = WATERMARK_DEFAULTS.gradientColor;
 
     const cl = state.collage;
     cl.rows = clamp(Math.round(numberOr(cl.rows, COLLAGE_DEFAULTS.rows)), 1, 8);
@@ -246,10 +378,39 @@
     if (!/^#[0-9a-f]{6}$/i.test(cl.background)) cl.background = COLLAGE_DEFAULTS.background;
     cl.soldNumbers = String(cl.soldNumbers ?? '').slice(0, 200);
 
+    sanitizeMarkSettings(state.marks.frame, FRAME_DEFAULTS, {
+      scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50], rotate: [-45, 45],
+      shadowOpacity: [0, 100], shadowBlur: [0, 20], shadowX: [-12, 12], shadowY: [-12, 12],
+      glowOpacity: [0, 100], glowBlur: [0, 30], strokeWidth: [0.2, 6],
+      blurOpacity: [0, 100], blurWidth: [0.5, 20]
+    });
+    sanitizeMarkSettings(state.marks.small, SMALL_DEFAULTS, {
+      scale: [3, 70], opacity: [5, 100], x: [-45, 45], y: [-45, 45], rotate: [-45, 45],
+      shadowOpacity: [0, 100], shadowBlur: [0, 30], shadowX: [-15, 15], shadowY: [-15, 15],
+      glowOpacity: [0, 100], glowBlur: [0, 40], strokeWidth: [0.2, 8],
+      blurOpacity: [0, 100], blurWidth: [0.5, 30]
+    });
+    if (!['tl','tc','tr','ml','mc','mr','bl','bc','br'].includes(state.marks.small.anchor)) {
+      state.marks.small.anchor = SMALL_DEFAULTS.anchor;
+    }
+
     const ex = state.export;
     ex.edge = ['1600','2400','3200','4000'].includes(String(ex.edge)) ? String(ex.edge) : EXPORT_DEFAULTS.edge;
     ex.quality = clamp(Math.round(numberOr(ex.quality, EXPORT_DEFAULTS.quality)), 70, 100);
     ex.prefix = String(ex.prefix || EXPORT_DEFAULTS.prefix).slice(0, 30);
+  }
+
+  function sanitizeMarkSettings(settings, defaults, limits) {
+    Object.entries(limits).forEach(([key, [min, max]]) => {
+      settings[key] = clamp(numberOr(settings[key], defaults[key]), min, max);
+    });
+    if (!BLEND_MODES[settings.blend]) settings.blend = defaults.blend;
+    ['shadowEnabled','glowEnabled','strokeEnabled','blurEnabled'].forEach((key) => {
+      settings[key] = Boolean(settings[key]);
+    });
+    ['shadowColor','glowColor','strokeColor','blurColor'].forEach((key) => {
+      if (!/^#[0-9a-f]{6}$/i.test(settings[key])) settings[key] = defaults[key];
+    });
   }
 
   function resetSettings() {
@@ -263,11 +424,10 @@
   }
 
   function applyPreset(name) {
+    name = PRESET_ALIASES[name] || name;
     if (!PRESETS[name]) return;
     state.watermark.preset = name;
     Object.assign(state.watermark, PRESETS[name]);
-    if (name === 'center') state.watermark.position = 'center';
-    else if (state.watermark.position === 'center') state.watermark.position = 'br';
     applyUiFromState();
     persistSettings();
     schedulePreview();
@@ -323,6 +483,270 @@
         reject(new Error('图片格式无法读取'));
       };
       img.src = url;
+    });
+  }
+
+  async function createAssetRecord(file) {
+    const image = await loadImage(file);
+    return {
+      id: fileId(),
+      file,
+      name: file.name,
+      image,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      thumbUrl: URL.createObjectURL(file)
+    };
+  }
+
+  function releaseAsset(record) {
+    if (record?.thumbUrl) URL.revokeObjectURL(record.thumbUrl);
+    if (record) record.image = null;
+  }
+
+  function releaseAllAssets() {
+    state.assets.fullscreen.forEach((layer) => releaseAsset(layer.record));
+    state.assets.fullscreen = [];
+    releaseAsset(state.assets.frame);
+    releaseAsset(state.assets.small);
+    state.assets.frame = null;
+    state.assets.small = null;
+  }
+
+  function validAssetFiles(files) {
+    return Array.from(files || []).filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast(`${file.name}：不是图片文件`, 'error');
+        return false;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        toast(`${file.name}：文件超过 60MB`, 'error');
+        return false;
+      }
+      return true;
+    });
+  }
+
+  async function addFullscreenAssets(files) {
+    const incoming = validAssetFiles(files);
+    if (!incoming.length) return;
+    const room = MAX_FULLSCREEN_LAYERS - state.assets.fullscreen.length;
+    if (room <= 0) {
+      toast(`全屏水印最多 ${MAX_FULLSCREEN_LAYERS} 层`, 'error');
+      return;
+    }
+    const selected = incoming.slice(0, room);
+    const records = [];
+    for (const file of selected) {
+      try {
+        records.push(await createAssetRecord(file));
+      } catch (_) {
+        toast(`${file.name}：无法读取`, 'error');
+      }
+    }
+    records.forEach((record, index) => {
+      state.assets.fullscreen.push({
+        id: record.id,
+        record,
+        opacity: index === 0 ? 42 : 30,
+        blend: index === 0 ? 'soft-light' : 'screen',
+        fit: 'cover',
+        placement: 'after'
+      });
+    });
+    if (incoming.length > room) toast(`最多保留 ${MAX_FULLSCREEN_LAYERS} 层全屏水印`, 'error');
+    renderMarkModules();
+    schedulePreview();
+  }
+
+  async function setSingleAsset(type, file) {
+    if (!file) return;
+    if (!validAssetFiles([file]).length) return;
+    try {
+      const record = await createAssetRecord(file);
+      releaseAsset(state.assets[type]);
+      state.assets[type] = record;
+      renderMarkModules();
+      schedulePreview();
+    } catch (_) {
+      toast(`${file.name}：无法读取`, 'error');
+    }
+  }
+
+  function removeFullscreenAsset(id) {
+    const index = state.assets.fullscreen.findIndex((layer) => layer.id === id);
+    if (index < 0) return;
+    releaseAsset(state.assets.fullscreen[index].record);
+    state.assets.fullscreen.splice(index, 1);
+    renderMarkModules();
+    schedulePreview();
+  }
+
+  function removeSingleAsset(type) {
+    releaseAsset(state.assets[type]);
+    state.assets[type] = null;
+    renderMarkModules();
+    schedulePreview();
+  }
+
+  function renderMarkModules() {
+    el.fullscreenCount.textContent = `${state.assets.fullscreen.length} 层`;
+    el.fullscreenPlacementNote.textContent = state.mode === 'collage'
+      ? '可在每一层选择叠在拼图前或拼图后；拼图前会进入每个格子下方，拼图后会覆盖整张目录。'
+      : '单图水印模式没有拼图前后之分，底纹会统一叠加在照片上方。';
+
+    el.frameStatus.textContent = state.assets.frame ? '已导入' : '未导入';
+    el.frameEmpty.hidden = Boolean(state.assets.frame);
+    el.frameEditor.hidden = !state.assets.frame;
+    if (state.assets.frame) {
+      el.frameThumb.src = state.assets.frame.thumbUrl;
+      el.frameThumb.alt = state.assets.frame.name;
+      el.frameName.textContent = state.assets.frame.name;
+    }
+
+    el.smallStatus.textContent = state.assets.small ? '已导入' : '未导入';
+    el.smallEmpty.hidden = Boolean(state.assets.small);
+    el.smallEditor.hidden = !state.assets.small;
+    if (state.assets.small) {
+      el.smallThumb.src = state.assets.small.thumbUrl;
+      el.smallThumb.alt = state.assets.small.name;
+      el.smallName.textContent = state.assets.small.name;
+    }
+
+    updateEffectVisibility();
+    renderFullscreenList();
+  }
+
+  function updateEffectVisibility() {
+    el.frameShadowControls.hidden = !state.marks.frame.shadowEnabled;
+    el.frameGlowControls.hidden = !state.marks.frame.glowEnabled;
+    el.frameStrokeControls.hidden = !state.marks.frame.strokeEnabled;
+    el.frameBlurControls.hidden = !state.marks.frame.blurEnabled;
+    el.smallShadowControls.hidden = !state.marks.small.shadowEnabled;
+    el.smallGlowControls.hidden = !state.marks.small.glowEnabled;
+    el.smallStrokeControls.hidden = !state.marks.small.strokeEnabled;
+    el.smallBlurControls.hidden = !state.marks.small.blurEnabled;
+  }
+
+  function makeOption(value, label) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    return option;
+  }
+
+  function renderFullscreenList() {
+    el.fullscreenList.innerHTML = '';
+    if (!state.assets.fullscreen.length) {
+      const empty = document.createElement('div');
+      empty.className = 'layer-empty';
+      empty.textContent = '尚未导入全屏水印';
+      el.fullscreenList.appendChild(empty);
+      return;
+    }
+
+    state.assets.fullscreen.forEach((layer, index) => {
+      const card = document.createElement('article');
+      card.className = 'layer-card';
+
+      const head = document.createElement('div');
+      head.className = 'layer-head';
+      const thumb = document.createElement('span');
+      thumb.className = 'layer-thumb';
+      const thumbImg = document.createElement('img');
+      thumbImg.src = layer.record.thumbUrl;
+      thumbImg.alt = '';
+      thumb.appendChild(thumbImg);
+      const name = document.createElement('div');
+      name.className = 'layer-name';
+      const title = document.createElement('strong');
+      title.textContent = `第 ${index + 1} 层 · ${layer.record.name}`;
+      const detail = document.createElement('small');
+      detail.textContent = `${layer.record.width} × ${layer.record.height}`;
+      name.append(title, detail);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'layer-remove';
+      remove.title = '移除这一层';
+      remove.setAttribute('aria-label', `移除 ${layer.record.name}`);
+      remove.textContent = '×';
+      remove.addEventListener('click', () => removeFullscreenAsset(layer.id));
+      head.append(thumb, name, remove);
+
+      const controls = document.createElement('div');
+      controls.className = 'layer-controls';
+
+      const opacityBox = document.createElement('div');
+      opacityBox.className = 'layer-control';
+      const opacityLabel = document.createElement('label');
+      opacityLabel.htmlFor = `layer-opacity-${layer.id}`;
+      opacityLabel.textContent = '不透明度';
+      const opacityOut = document.createElement('output');
+      opacityOut.textContent = `${layer.opacity}%`;
+      opacityLabel.appendChild(opacityOut);
+      const opacity = document.createElement('input');
+      opacity.type = 'range';
+      opacity.id = `layer-opacity-${layer.id}`;
+      opacity.min = '0';
+      opacity.max = '100';
+      opacity.step = '1';
+      opacity.value = String(layer.opacity);
+      syncRange(opacity, opacityOut);
+      opacity.addEventListener('input', () => {
+        layer.opacity = numberOr(opacity.value, 40);
+        syncRange(opacity, opacityOut);
+        schedulePreview();
+      });
+      opacityBox.append(opacityLabel, opacity);
+
+      const blendBox = document.createElement('div');
+      blendBox.className = 'layer-control';
+      const blendLabel = document.createElement('label');
+      blendLabel.textContent = '混合模式';
+      const blend = document.createElement('select');
+      [
+        ['normal','正常'], ['soft-light','柔光'], ['screen','滤色'], ['multiply','正片叠底'],
+        ['overlay','叠加'], ['lighten','变亮'], ['darken','变暗']
+      ].forEach(([value, label]) => blend.appendChild(makeOption(value, label)));
+      blend.value = layer.blend;
+      blend.addEventListener('change', () => {
+        layer.blend = FULLSCREEN_BLENDS.includes(blend.value) ? blend.value : 'normal';
+        schedulePreview();
+      });
+      blendBox.append(blendLabel, blend);
+
+      const fitBox = document.createElement('div');
+      fitBox.className = 'layer-control';
+      const fitLabel = document.createElement('label');
+      fitLabel.textContent = '铺放方式';
+      const fit = document.createElement('select');
+      [['cover','铺满画面'],['contain','完整显示'],['tile','平铺重复']].forEach(([value, label]) => fit.appendChild(makeOption(value, label)));
+      fit.value = layer.fit;
+      fit.addEventListener('change', () => {
+        layer.fit = ['cover','contain','tile'].includes(fit.value) ? fit.value : 'cover';
+        schedulePreview();
+      });
+      fitBox.append(fitLabel, fit);
+
+      controls.append(opacityBox, blendBox, fitBox);
+      if (state.mode === 'collage') {
+        const placeBox = document.createElement('div');
+        placeBox.className = 'layer-control wide';
+        const placeLabel = document.createElement('label');
+        placeLabel.textContent = '与拼图的关系';
+        const place = document.createElement('select');
+        [['before','拼图前叠加'],['after','拼图后叠加']].forEach(([value, label]) => place.appendChild(makeOption(value, label)));
+        place.value = layer.placement;
+        place.addEventListener('change', () => {
+          layer.placement = place.value === 'before' ? 'before' : 'after';
+          schedulePreview();
+        });
+        placeBox.append(placeLabel, place);
+        controls.appendChild(placeBox);
+      }
+
+      card.append(head, controls);
+      el.fullscreenList.appendChild(card);
     });
   }
 
@@ -591,14 +1015,14 @@
     ctx.closePath();
   }
 
-  function drawText(ctx, text, x, y, size, align = 'left', baseline = 'middle') {
+  function drawText(ctx, text, x, y, size, align = 'left', baseline = 'middle', alpha = 1) {
     const wm = state.watermark;
     ctx.save();
     ctx.font = `600 ${size}px ${FONT_STACKS[wm.font] || FONT_STACKS.sans}`;
     ctx.textAlign = align;
     ctx.textBaseline = baseline;
     ctx.lineJoin = 'round';
-    ctx.globalAlpha = wm.opacity / 100;
+    ctx.globalAlpha = (wm.opacity / 100) * alpha;
     if (wm.stroke > 0) {
       ctx.strokeStyle = wm.strokeColor;
       ctx.lineWidth = Math.max(0.5, size * (wm.stroke / 100) * 1.8);
@@ -626,7 +1050,21 @@
     }
     ctx.translate(dims.x, dims.y);
 
-    if (preset === 'tiled') {
+    if (preset === 'double') {
+      const maxWidth = boxW - margin * 2;
+      const size = fitFontSize(ctx, text, baseSize, maxWidth);
+      const ghostSize = fitFontSize(ctx, text, minDim * 0.19, boxW * 0.9);
+      drawText(ctx, text, boxW / 2, boxH * 0.54, ghostSize, 'center', 'middle', 0.12);
+      const pos = wm.position === 'center' ? 'br' : wm.position;
+      let x = margin;
+      let y = margin;
+      let align = 'left';
+      let baseline = 'top';
+      if (pos === 'br') { x = boxW - margin; y = boxH - margin; align = 'right'; baseline = 'bottom'; }
+      else if (pos === 'bl') { x = margin; y = boxH - margin; baseline = 'bottom'; }
+      else if (pos === 'tr') { x = boxW - margin; y = margin; align = 'right'; }
+      drawText(ctx, text, x, y, size, align, baseline);
+    } else if (preset === 'tiled') {
       const size = fitFontSize(ctx, text, baseSize, boxW * 0.5);
       const spacing = size * (wm.gap / 10);
       const angle = wm.rotate * Math.PI / 180;
@@ -655,6 +1093,28 @@
           }
         }
       }
+    } else if (preset === 'gradient') {
+      const gradientHeight = boxH * (wm.gradientHeight / 100);
+      const top = boxH - gradientHeight;
+      const strength = clamp(wm.gradientStrength / 100, 0, 1);
+      const gradient = ctx.createLinearGradient(0, top, 0, boxH);
+      gradient.addColorStop(0, hexToRgba(wm.gradientColor, 0));
+      gradient.addColorStop(0.5, hexToRgba(wm.gradientColor, strength * 0.3));
+      gradient.addColorStop(1, hexToRgba(wm.gradientColor, strength * 0.96));
+      ctx.save();
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, top, boxW, gradientHeight);
+      ctx.restore();
+
+      const maxWidth = boxW - margin * 2;
+      const ghostSize = fitFontSize(ctx, text, minDim * 0.18, maxWidth * 0.96);
+      const size = fitFontSize(ctx, text, baseSize, maxWidth * 0.82);
+      drawText(ctx, text, boxW / 2, top + gradientHeight * 0.48, ghostSize, 'center', 'middle', 0.17);
+      ctx.save();
+      ctx.shadowColor = hexToRgba(wm.gradientColor, 0.55);
+      ctx.shadowBlur = minDim * 0.025;
+      drawText(ctx, text, boxW / 2, top + gradientHeight * 0.68, size, 'center', 'middle');
+      ctx.restore();
     } else if (preset === 'band') {
       const bandH = Math.max(baseSize * 2.75, boxH * 0.085);
       const bandY = boxH - bandH;
@@ -664,10 +1124,6 @@
       const size = fitFontSize(ctx, text, baseSize, boxW - margin * 2 - (state.collage.numberEnabled ? boxW * 0.1 : 0));
       drawText(ctx, text, margin, bandY + bandH / 2, size * 0.92, 'left', 'middle');
       ctx.restore();
-    } else if (preset === 'center') {
-      const maxWidth = boxW - margin * 2;
-      const size = fitFontSize(ctx, text, baseSize, maxWidth);
-      drawText(ctx, text, boxW / 2, boxH / 2, size, 'center', 'middle');
     } else {
       const maxWidth = boxW - margin * 2;
       const size = fitFontSize(ctx, text, baseSize, maxWidth);
@@ -712,6 +1168,169 @@
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 
+  function drawTiledImage(ctx, img, x, y, w, h, opacity) {
+    const tileW = Math.max(1, w * 0.28);
+    const tileH = tileW * (img.naturalHeight / Math.max(1, img.naturalWidth));
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    for (let ty = y; ty < y + h; ty += tileH) {
+      for (let tx = x; tx < x + w; tx += tileW) {
+        ctx.drawImage(img, tx, ty, tileW, tileH);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawFullscreenLayers(ctx, x, y, w, h, placement) {
+    state.assets.fullscreen.forEach((layer) => {
+      if (state.mode === 'collage' && placement && layer.placement !== placement) return;
+      if (!layer.record?.image) return;
+      const img = layer.record.image;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+      ctx.globalAlpha = clamp(layer.opacity, 0, 100) / 100;
+      ctx.globalCompositeOperation = BLEND_MODES[layer.blend] || 'source-over';
+      if (layer.fit === 'contain') {
+        drawContain(ctx, img, x, y, w, h);
+      } else if (layer.fit === 'tile') {
+        drawTiledImage(ctx, img, x, y, w, h, 1);
+      } else {
+        drawCover(ctx, img, x, y, w, h);
+      }
+      ctx.restore();
+    });
+  }
+
+  function tintedMask(img, color, drawW, drawH, padding) {
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, 2200 / Math.max(drawW + padding * 2, drawH + padding * 2));
+    canvas.width = Math.max(1, Math.ceil((drawW + padding * 2) * scale));
+    canvas.height = Math.max(1, Math.ceil((drawH + padding * 2) * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, padding * scale, padding * scale, drawW * scale, drawH * scale);
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    return { canvas, scale, padding };
+  }
+
+  function drawMaskBlur(ctx, img, color, alpha, blurPx, dw, dh) {
+    if (alpha <= 0 || blurPx <= 0) return;
+    const padding = Math.ceil(blurPx * 2.2);
+    const mask = tintedMask(img, color, dw, dh, padding);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.filter = `blur(${Math.max(0.1, blurPx * mask.scale)}px)`;
+    const width = dw + padding * 2;
+    const height = dh + padding * 2;
+    ctx.drawImage(mask.canvas, -dw / 2 - padding, -dh / 2 - padding, width, height);
+    ctx.restore();
+  }
+
+  function drawMaskStroke(ctx, img, color, widthPx, dw, dh) {
+    if (widthPx <= 0) return;
+    const padding = Math.ceil(widthPx + 2);
+    const mask = tintedMask(img, color, dw, dh, padding);
+    const scaleX = (dw + padding * 2) / mask.canvas.width;
+    const scaleY = (dh + padding * 2) / mask.canvas.height;
+    ctx.save();
+    const steps = 16;
+    for (let i = 0; i < steps; i++) {
+      const angle = (Math.PI * 2 * i) / steps;
+      const ox = Math.cos(angle) * widthPx;
+      const oy = Math.sin(angle) * widthPx;
+      ctx.drawImage(
+        mask.canvas,
+        -dw / 2 - padding + ox,
+        -dh / 2 - padding + oy,
+        mask.canvas.width * scaleX,
+        mask.canvas.height * scaleY
+      );
+    }
+    ctx.restore();
+  }
+
+  function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind) {
+    if (!img) return;
+    const sourceW = img.naturalWidth;
+    const sourceH = img.naturalHeight;
+    let dw;
+    let dh;
+    if (kind === 'frame') {
+      const fit = Math.min(boxW / sourceW, boxH / sourceH) * (settings.scale / 100);
+      dw = sourceW * fit;
+      dh = sourceH * fit;
+    } else {
+      const fit = (Math.min(boxW, boxH) * (settings.scale / 100)) / Math.max(sourceW, sourceH);
+      dw = sourceW * fit;
+      dh = sourceH * fit;
+    }
+
+    const anchor = kind === 'frame' ? 'mc' : settings.anchor;
+    const offsetX = boxW * (settings.x / 100);
+    const offsetY = boxH * (settings.y / 100);
+    let cx = boxW / 2 + offsetX;
+    let cy = boxH / 2 + offsetY;
+    if (anchor.includes('l')) cx = offsetX + dw / 2;
+    if (anchor.includes('r')) cx = boxW - offsetX - dw / 2;
+    if (anchor.startsWith('t')) cy = offsetY + dh / 2;
+    if (anchor.startsWith('b')) cy = boxH - offsetY - dh / 2;
+
+    const unit = Math.min(dw, dh);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((settings.rotate || 0) * Math.PI / 180);
+
+    if (settings.blurEnabled) {
+      drawMaskBlur(
+        ctx,
+        img,
+        settings.blurColor,
+        settings.blurOpacity / 100,
+        unit * (settings.blurWidth / 100),
+        dw,
+        dh
+      );
+    }
+    if (settings.glowEnabled) {
+      drawMaskBlur(
+        ctx,
+        img,
+        settings.glowColor,
+        settings.glowOpacity / 100,
+        unit * (settings.glowBlur / 100),
+        dw,
+        dh
+      );
+    }
+    if (settings.strokeEnabled) {
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      drawMaskStroke(ctx, img, settings.strokeColor, unit * (settings.strokeWidth / 100), dw, dh);
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.globalAlpha = clamp(settings.opacity, 0, 100) / 100;
+    ctx.globalCompositeOperation = BLEND_MODES[settings.blend] || 'source-over';
+    if (settings.shadowEnabled) {
+      ctx.shadowColor = hexToRgba(settings.shadowColor, settings.shadowOpacity / 100);
+      ctx.shadowBlur = unit * (settings.shadowBlur / 100);
+      ctx.shadowOffsetX = unit * (settings.shadowX / 100);
+      ctx.shadowOffsetY = unit * (settings.shadowY / 100);
+    }
+    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawImportedMarks(ctx, boxW, boxH) {
+    drawCompositeAsset(ctx, state.assets.frame?.image, boxW, boxH, state.marks.frame, 'frame');
+    drawCompositeAsset(ctx, state.assets.small?.image, boxW, boxH, state.marks.small, 'small');
+  }
+
   function watermarkLongEdge(img) {
     const scale = Math.min(1, PREVIEW_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
     return {
@@ -732,7 +1351,9 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     drawContain(ctx, img, 0, 0, width, height);
+    drawFullscreenLayers(ctx, 0, 0, width, height);
     drawWatermark(ctx, width, height, index);
+    drawImportedMarks(ctx, width, height);
     return { width, height };
   }
 
@@ -852,11 +1473,12 @@
       roundedRect(ctx, x, y, base.cellW, base.cellH, base.cellW * 0.012);
       ctx.clip();
       drawCover(ctx, img, x, y, base.cellW, base.cellH);
+      drawFullscreenLayers(ctx, x, y, base.cellW, base.cellH, 'before');
       const number = state.collage.numberStart + start + slot;
       if (isSold(number)) soldOverlay(ctx, x, y, base.cellW, base.cellH);
       if (state.collage.cellMarkEnabled) {
         drawWatermark(ctx, base.cellW, base.cellH, start + slot, {
-          preset: state.watermark.preset === 'tiled' ? 'corner' : state.watermark.preset,
+          preset: state.watermark.preset === 'tiled' ? 'double' : state.watermark.preset,
           dims: { x, y, w: base.cellW, h: base.cellH },
           clip: true,
           radius: base.cellW * 0.012
@@ -865,6 +1487,8 @@
       if (state.collage.numberEnabled) drawItemNumber(ctx, number, x, y, base.cellW, base.cellH);
       ctx.restore();
     }
+    drawFullscreenLayers(ctx, 0, 0, base.width, base.height, 'after');
+    drawImportedMarks(ctx, base.width, base.height);
     ctx.restore();
     return { width, height };
   }
@@ -1053,6 +1677,20 @@
     else state.export[key] = control.value;
   }
 
+  function readMarkControl(control) {
+    const path = control.dataset.mark;
+    if (!path) return;
+    let value;
+    if (control.type === 'checkbox') value = control.checked;
+    else if (control.type === 'range' || control.type === 'number') {
+      const fallback = getPath(state.marks, path);
+      value = numberOr(control.value, fallback);
+    } else {
+      value = control.value;
+    }
+    setPath(state.marks, path, value);
+  }
+
   function bindControls() {
     el.resetSettingsBtn.addEventListener('click', resetSettings);
     el.clearImagesBtn.addEventListener('click', clearFiles);
@@ -1060,6 +1698,27 @@
     el.nextBtn.addEventListener('click', () => goPage(1));
     el.downloadCurrentBtn.addEventListener('click', downloadCurrent);
     el.exportAllBtn.addEventListener('click', exportAllZip);
+    el.frameChooseBtn.addEventListener('click', () => el.frameInput.click());
+    el.smallChooseBtn.addEventListener('click', () => el.smallInput.click());
+    el.addFullscreenBtn.addEventListener('click', () => el.fullscreenInput.click());
+    el.frameRemoveBtn.addEventListener('click', () => removeSingleAsset('frame'));
+    el.smallRemoveBtn.addEventListener('click', () => removeSingleAsset('small'));
+
+    el.fullscreenInput.addEventListener('change', async (event) => {
+      const files = Array.from(event.target.files || []);
+      event.target.value = '';
+      await addFullscreenAssets(files);
+    });
+    el.frameInput.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      await setSingleAsset('frame', file);
+    });
+    el.smallInput.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      await setSingleAsset('small', file);
+    });
 
     el.modeTabs.forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
     el.presetCards.forEach((card) => card.addEventListener('click', () => applyPreset(card.dataset.preset)));
@@ -1075,10 +1734,26 @@
             margin: el.watermarkMarginValue,
             rotate: el.watermarkRotateValue,
             gap: el.watermarkGapValue,
-            stroke: el.watermarkStrokeValue
+            stroke: el.watermarkStrokeValue,
+            gradientStrength: el.gradientStrengthValue,
+            gradientHeight: el.gradientHeightValue
           };
           syncRange(control, map[control.dataset.watermark], control.dataset.watermark === 'rotate' ? '°' : (control.dataset.watermark === 'gap' ? '' : '%'));
         }
+        persistSettings();
+        schedulePreview();
+      });
+    });
+
+    el.markControls.forEach((control) => {
+      const eventName = control.type === 'range' ? 'input' : 'change';
+      control.addEventListener(eventName, () => {
+        readMarkControl(control);
+        if (control.type === 'range') {
+          const output = document.querySelector(`[data-value-for="${control.dataset.mark}"]`);
+          syncRange(control, output, control.dataset.mark.endsWith('.rotate') ? '°' : '%');
+        }
+        updateEffectVisibility();
         persistSettings();
         schedulePreview();
       });
@@ -1158,6 +1833,7 @@
     });
     window.addEventListener('beforeunload', () => {
       state.files.forEach((f) => f.thumbUrl && URL.revokeObjectURL(f.thumbUrl));
+      releaseAllAssets();
     });
   }
 
