@@ -4,7 +4,7 @@
   const MAX_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
-  const STORAGE_KEY = 'kaki-mark-studio-settings-v1';
+  const STORAGE_KEY = 'kaki-mark-studio-settings-v2';
   const PREVIEW_EDGE = 1500;
 
   const WATERMARK_DEFAULTS = Object.freeze({
