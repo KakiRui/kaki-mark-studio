@@ -210,7 +210,7 @@
         <div class="mark-workspace">
           <div class="mark-workspace-heading">
             <span>IMAGE MARKS</span>
-            <p>下列图层同时作用于单图与目录拼图</p>
+            <p>同时作用于单图与拼图 · 效果距离按画布比例换算</p>
           </div>
 
           <details class="mark-module" open>
@@ -236,7 +236,7 @@
               <b id="frameStatus">未导入</b>
             </summary>
             <div class="module-body">
-              <p class="module-lead">导入透明水印框后，可调节尺寸与位置，并为边缘添加投影、外发光、描边或柔化模糊边。</p>
+              <p class="module-lead">导入透明水印框后，可调节尺寸与位置，并为边缘添加投影、外发光、平滑描边或底图柔化边框。</p>
               <input type="file" id="frameInput" accept="image/*" hidden>
               <div class="asset-empty" id="frameEmpty">
                 <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
@@ -298,23 +298,23 @@
                         <input id="frameShadowColor" type="color" value="#000000" data-mark="frame.shadowColor">
                       </div>
                       <div>
-                        <label for="frameShadowOpacity">阴影浓度 <output data-value-for="frame.shadowOpacity">32%</output></label>
+                        <label for="frameShadowOpacity">阴影浓度 <output data-value-for="frame.shadowOpacity" data-suffix="%">32%</output></label>
                         <input id="frameShadowOpacity" type="range" min="0" max="100" step="1" value="32" data-mark="frame.shadowOpacity">
                       </div>
                     </div>
                     <div class="two-up">
                       <div>
-                        <label for="frameShadowBlur">模糊 <output data-value-for="frame.shadowBlur">5%</output></label>
-                        <input id="frameShadowBlur" type="range" min="0" max="20" step="0.5" value="5" data-mark="frame.shadowBlur">
+                        <label for="frameShadowBlur">模糊 <output data-value-for="frame.shadowBlur" data-suffix="px">40px</output></label>
+                        <input id="frameShadowBlur" type="range" min="0" max="120" step="1" value="40" data-mark="frame.shadowBlur">
                       </div>
                       <div>
-                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX">1%</output></label>
-                        <input id="frameShadowX" type="range" min="-12" max="12" step="0.5" value="1" data-mark="frame.shadowX">
+                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX" data-suffix="px">8px</output></label>
+                        <input id="frameShadowX" type="range" min="-40" max="40" step="0.5" value="8" data-mark="frame.shadowX">
                       </div>
                     </div>
                     <div>
-                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY">2%</output></label>
-                      <input id="frameShadowY" type="range" min="-12" max="12" step="0.5" value="2" data-mark="frame.shadowY">
+                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY" data-suffix="px">12px</output></label>
+                      <input id="frameShadowY" type="range" min="-40" max="40" step="0.5" value="12" data-mark="frame.shadowY">
                     </div>
                   </div>
 
@@ -329,13 +329,13 @@
                         <input id="frameGlowColor" type="color" value="#ffffff" data-mark="frame.glowColor">
                       </div>
                       <div>
-                        <label for="frameGlowOpacity">发光浓度 <output data-value-for="frame.glowOpacity">48%</output></label>
+                        <label for="frameGlowOpacity">发光浓度 <output data-value-for="frame.glowOpacity" data-suffix="%">48%</output></label>
                         <input id="frameGlowOpacity" type="range" min="0" max="100" step="1" value="48" data-mark="frame.glowOpacity">
                       </div>
                     </div>
                     <div>
-                      <label for="frameGlowBlur">发光范围 <output data-value-for="frame.glowBlur">8%</output></label>
-                      <input id="frameGlowBlur" type="range" min="0" max="30" step="0.5" value="8" data-mark="frame.glowBlur">
+                      <label for="frameGlowBlur">发光范围 <output data-value-for="frame.glowBlur" data-suffix="px">35px</output></label>
+                      <input id="frameGlowBlur" type="range" min="0" max="140" step="1" value="35" data-mark="frame.glowBlur">
                     </div>
                   </div>
 
@@ -350,8 +350,8 @@
                         <input id="frameStrokeColor" type="color" value="#ffffff" data-mark="frame.strokeColor">
                       </div>
                       <div>
-                        <label for="frameStrokeWidth">描边粗细 <output data-value-for="frame.strokeWidth">1.5%</output></label>
-                        <input id="frameStrokeWidth" type="range" min="0.2" max="6" step="0.1" value="1.5" data-mark="frame.strokeWidth">
+                        <label for="frameStrokeWidth">描边粗细 <output data-value-for="frame.strokeWidth" data-suffix="px">5px</output></label>
+                        <input id="frameStrokeWidth" type="range" min="0.2" max="24" step="0.1" value="5" data-mark="frame.strokeWidth">
                       </div>
                     </div>
                   </div>
@@ -363,17 +363,17 @@
                   <div class="effect-controls" id="frameBlurControls" hidden>
                     <div class="two-up">
                       <div>
-                        <label for="frameBlurColor">柔边颜色</label>
-                        <input id="frameBlurColor" type="color" value="#ffffff" data-mark="frame.blurColor">
+                        <label for="frameBlurAmount">模糊强度 <output data-value-for="frame.blurAmount" data-suffix="px">24px</output></label>
+                        <input id="frameBlurAmount" type="range" min="1" max="120" step="1" value="24" data-mark="frame.blurAmount">
                       </div>
                       <div>
-                        <label for="frameBlurOpacity">柔边浓度 <output data-value-for="frame.blurOpacity">40%</output></label>
-                        <input id="frameBlurOpacity" type="range" min="0" max="100" step="1" value="40" data-mark="frame.blurOpacity">
+                        <label for="frameBlurExpand">扩展边缘 <output data-value-for="frame.blurExpand" data-suffix="px">7px</output></label>
+                        <input id="frameBlurExpand" type="range" min="0" max="60" step="0.5" value="7" data-mark="frame.blurExpand">
                       </div>
                     </div>
                     <div>
-                      <label for="frameBlurWidth">模糊边粗细 <output data-value-for="frame.blurWidth">7%</output></label>
-                      <input id="frameBlurWidth" type="range" min="0.5" max="20" step="0.5" value="7" data-mark="frame.blurWidth">
+                      <label for="frameBlurOpacity">底纹浓度 <output data-value-for="frame.blurOpacity" data-suffix="%">62%</output></label>
+                      <input id="frameBlurOpacity" type="range" min="0" max="100" step="1" value="62" data-mark="frame.blurOpacity">
                     </div>
                   </div>
                 </div>
@@ -465,23 +465,23 @@
                         <input id="smallShadowColor" type="color" value="#000000" data-mark="small.shadowColor">
                       </div>
                       <div>
-                        <label for="smallShadowOpacity">阴影浓度 <output data-value-for="small.shadowOpacity">42%</output></label>
+                        <label for="smallShadowOpacity">阴影浓度 <output data-value-for="small.shadowOpacity" data-suffix="%">42%</output></label>
                         <input id="smallShadowOpacity" type="range" min="0" max="100" step="1" value="42" data-mark="small.shadowOpacity">
                       </div>
                     </div>
                     <div class="two-up">
                       <div>
-                        <label for="smallShadowBlur">模糊 <output data-value-for="small.shadowBlur">8%</output></label>
-                        <input id="smallShadowBlur" type="range" min="0" max="30" step="0.5" value="8" data-mark="small.shadowBlur">
+                        <label for="smallShadowBlur">模糊 <output data-value-for="small.shadowBlur" data-suffix="px">14px</output></label>
+                        <input id="smallShadowBlur" type="range" min="0" max="60" step="0.5" value="14" data-mark="small.shadowBlur">
                       </div>
                       <div>
-                        <label for="smallShadowX">水平距离 <output data-value-for="small.shadowX">1.5%</output></label>
-                        <input id="smallShadowX" type="range" min="-15" max="15" step="0.5" value="1.5" data-mark="small.shadowX">
+                        <label for="smallShadowX">水平距离 <output data-value-for="small.shadowX" data-suffix="px">3px</output></label>
+                        <input id="smallShadowX" type="range" min="-20" max="20" step="0.5" value="3" data-mark="small.shadowX">
                       </div>
                     </div>
                     <div>
-                      <label for="smallShadowY">垂直距离 <output data-value-for="small.shadowY">2%</output></label>
-                      <input id="smallShadowY" type="range" min="-15" max="15" step="0.5" value="2" data-mark="small.shadowY">
+                      <label for="smallShadowY">垂直距离 <output data-value-for="small.shadowY" data-suffix="px">5px</output></label>
+                      <input id="smallShadowY" type="range" min="-20" max="20" step="0.5" value="5" data-mark="small.shadowY">
                     </div>
                   </div>
 
@@ -496,13 +496,13 @@
                         <input id="smallGlowColor" type="color" value="#ffffff" data-mark="small.glowColor">
                       </div>
                       <div>
-                        <label for="smallGlowOpacity">发光浓度 <output data-value-for="small.glowOpacity">50%</output></label>
+                        <label for="smallGlowOpacity">发光浓度 <output data-value-for="small.glowOpacity" data-suffix="%">50%</output></label>
                         <input id="smallGlowOpacity" type="range" min="0" max="100" step="1" value="50" data-mark="small.glowOpacity">
                       </div>
                     </div>
                     <div>
-                      <label for="smallGlowBlur">发光范围 <output data-value-for="small.glowBlur">12%</output></label>
-                      <input id="smallGlowBlur" type="range" min="0" max="40" step="0.5" value="12" data-mark="small.glowBlur">
+                      <label for="smallGlowBlur">发光范围 <output data-value-for="small.glowBlur" data-suffix="px">18px</output></label>
+                      <input id="smallGlowBlur" type="range" min="0" max="80" step="0.5" value="18" data-mark="small.glowBlur">
                     </div>
                   </div>
 
@@ -517,8 +517,8 @@
                         <input id="smallStrokeColor" type="color" value="#ffffff" data-mark="small.strokeColor">
                       </div>
                       <div>
-                        <label for="smallStrokeWidth">描边粗细 <output data-value-for="small.strokeWidth">2%</output></label>
-                        <input id="smallStrokeWidth" type="range" min="0.2" max="8" step="0.1" value="2" data-mark="small.strokeWidth">
+                        <label for="smallStrokeWidth">描边粗细 <output data-value-for="small.strokeWidth" data-suffix="px">2.5px</output></label>
+                        <input id="smallStrokeWidth" type="range" min="0.2" max="16" step="0.1" value="2.5" data-mark="small.strokeWidth">
                       </div>
                     </div>
                   </div>
@@ -530,17 +530,17 @@
                   <div class="effect-controls" id="smallBlurControls" hidden>
                     <div class="two-up">
                       <div>
-                        <label for="smallBlurColor">柔底颜色</label>
-                        <input id="smallBlurColor" type="color" value="#ffffff" data-mark="small.blurColor">
+                        <label for="smallBlurAmount">模糊强度 <output data-value-for="small.blurAmount" data-suffix="px">12px</output></label>
+                        <input id="smallBlurAmount" type="range" min="1" max="80" step="0.5" value="12" data-mark="small.blurAmount">
                       </div>
                       <div>
-                        <label for="smallBlurOpacity">柔底浓度 <output data-value-for="small.blurOpacity">46%</output></label>
-                        <input id="smallBlurOpacity" type="range" min="0" max="100" step="1" value="46" data-mark="small.blurOpacity">
+                        <label for="smallBlurExpand">扩展边缘 <output data-value-for="small.blurExpand" data-suffix="px">4px</output></label>
+                        <input id="smallBlurExpand" type="range" min="0" max="40" step="0.5" value="4" data-mark="small.blurExpand">
                       </div>
                     </div>
                     <div>
-                      <label for="smallBlurWidth">模糊底粗细 <output data-value-for="small.blurWidth">10%</output></label>
-                      <input id="smallBlurWidth" type="range" min="0.5" max="30" step="0.5" value="10" data-mark="small.blurWidth">
+                      <label for="smallBlurOpacity">底纹浓度 <output data-value-for="small.blurOpacity" data-suffix="%">66%</output></label>
+                      <input id="smallBlurOpacity" type="range" min="0" max="100" step="1" value="66" data-mark="small.blurOpacity">
                     </div>
                   </div>
                 </div>

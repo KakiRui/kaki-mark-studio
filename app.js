@@ -65,20 +65,20 @@
     shadowEnabled: true,
     shadowColor: '#000000',
     shadowOpacity: 32,
-    shadowBlur: 5,
-    shadowX: 1,
-    shadowY: 2,
+    shadowBlur: 40,
+    shadowX: 8,
+    shadowY: 12,
     glowEnabled: false,
     glowColor: '#ffffff',
     glowOpacity: 48,
-    glowBlur: 8,
+    glowBlur: 35,
     strokeEnabled: false,
     strokeColor: '#ffffff',
-    strokeWidth: 1.5,
+    strokeWidth: 5,
     blurEnabled: false,
-    blurColor: '#ffffff',
-    blurOpacity: 40,
-    blurWidth: 7
+    blurOpacity: 62,
+    blurAmount: 24,
+    blurExpand: 7
   });
 
   const SMALL_DEFAULTS = Object.freeze({
@@ -92,20 +92,20 @@
     shadowEnabled: true,
     shadowColor: '#000000',
     shadowOpacity: 42,
-    shadowBlur: 8,
-    shadowX: 1.5,
-    shadowY: 2,
+    shadowBlur: 14,
+    shadowX: 3,
+    shadowY: 5,
     glowEnabled: false,
     glowColor: '#ffffff',
     glowOpacity: 50,
-    glowBlur: 12,
+    glowBlur: 18,
     strokeEnabled: false,
     strokeColor: '#ffffff',
-    strokeWidth: 2,
+    strokeWidth: 2.5,
     blurEnabled: false,
-    blurColor: '#ffffff',
-    blurOpacity: 46,
-    blurWidth: 10
+    blurOpacity: 66,
+    blurAmount: 12,
+    blurExpand: 4
   });
 
   const BLEND_MODES = Object.freeze({
@@ -244,7 +244,7 @@
       const key = output.dataset.valueFor;
       const control = el.markControls.find((item) => item.dataset.mark === key && item.type === 'range');
       if (!control) return;
-      syncRange(control, output, key.endsWith('.rotate') ? '°' : '%');
+      syncRange(control, output, output.dataset.suffix || (key.endsWith('.rotate') ? '°' : '%'));
     });
   }
 
@@ -380,15 +380,15 @@
 
     sanitizeMarkSettings(state.marks.frame, FRAME_DEFAULTS, {
       scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50], rotate: [-45, 45],
-      shadowOpacity: [0, 100], shadowBlur: [0, 20], shadowX: [-12, 12], shadowY: [-12, 12],
-      glowOpacity: [0, 100], glowBlur: [0, 30], strokeWidth: [0.2, 6],
-      blurOpacity: [0, 100], blurWidth: [0.5, 20]
+      shadowOpacity: [0, 100], shadowBlur: [0, 120], shadowX: [-40, 40], shadowY: [-40, 40],
+      glowOpacity: [0, 100], glowBlur: [0, 140], strokeWidth: [0.2, 24],
+      blurOpacity: [0, 100], blurAmount: [1, 120], blurExpand: [0, 60]
     });
     sanitizeMarkSettings(state.marks.small, SMALL_DEFAULTS, {
       scale: [3, 70], opacity: [5, 100], x: [-45, 45], y: [-45, 45], rotate: [-45, 45],
-      shadowOpacity: [0, 100], shadowBlur: [0, 30], shadowX: [-15, 15], shadowY: [-15, 15],
-      glowOpacity: [0, 100], glowBlur: [0, 40], strokeWidth: [0.2, 8],
-      blurOpacity: [0, 100], blurWidth: [0.5, 30]
+      shadowOpacity: [0, 100], shadowBlur: [0, 60], shadowX: [-20, 20], shadowY: [-20, 20],
+      glowOpacity: [0, 100], glowBlur: [0, 80], strokeWidth: [0.2, 16],
+      blurOpacity: [0, 100], blurAmount: [1, 80], blurExpand: [0, 40]
     });
     if (!['tl','tc','tr','ml','mc','mr','bl','bc','br'].includes(state.marks.small.anchor)) {
       state.marks.small.anchor = SMALL_DEFAULTS.anchor;
@@ -408,7 +408,7 @@
     ['shadowEnabled','glowEnabled','strokeEnabled','blurEnabled'].forEach((key) => {
       settings[key] = Boolean(settings[key]);
     });
-    ['shadowColor','glowColor','strokeColor','blurColor'].forEach((key) => {
+    ['shadowColor','glowColor','strokeColor'].forEach((key) => {
       if (!/^#[0-9a-f]{6}$/i.test(settings[key])) settings[key] = defaults[key];
     });
   }
@@ -1229,30 +1229,167 @@
     ctx.restore();
   }
 
+  function edt1d(f, d, n) {
+    if (n <= 0) return;
+    const v = new Int32Array(n);
+    const z = new Float64Array(n + 1);
+    let first = -1;
+    for (let i = 0; i < n; i++) {
+      if (Number.isFinite(f[i])) {
+        first = i;
+        break;
+      }
+    }
+    if (first < 0) {
+      d.fill(Infinity, 0, n);
+      return;
+    }
+    let k = 0;
+    v[0] = first;
+    z[0] = -Infinity;
+    z[1] = Infinity;
+    for (let q = first + 1; q < n; q++) {
+      let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]) {
+        k--;
+        s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      }
+      k++;
+      v[k] = q;
+      z[k] = s;
+      z[k + 1] = Infinity;
+    }
+    k = 0;
+    for (let q = 0; q < n; q++) {
+      while (z[k + 1] < q) k++;
+      const delta = q - v[k];
+      d[q] = delta * delta + f[v[k]];
+    }
+  }
+
+  function distanceTransformFromAlpha(alpha, width, height) {
+    const data = new Float64Array(width * height);
+    let hasMark = false;
+    for (let i = 0; i < data.length; i++) {
+      if (alpha[i] > 8) {
+        data[i] = 0;
+        hasMark = true;
+      } else {
+        data[i] = Infinity;
+      }
+    }
+    if (!hasMark) return null;
+    const length = Math.max(width, height);
+    const f = new Float64Array(length);
+    const d = new Float64Array(length);
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) f[y] = data[x + y * width];
+      edt1d(f, d, height);
+      for (let y = 0; y < height; y++) data[x + y * width] = d[y];
+    }
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) f[x] = data[x + y * width];
+      edt1d(f, d, width);
+      for (let x = 0; x < width; x++) data[x + y * width] = d[x];
+    }
+    return data;
+  }
+
+  function createSilhouette(img, drawW, drawH, padding, radiusPx, maxDimension = 1600) {
+    const scale = Math.min(1, maxDimension / Math.max(1, drawW + padding * 2, drawH + padding * 2));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.ceil((drawW + padding * 2) * scale));
+    canvas.height = Math.max(1, Math.ceil((drawH + padding * 2) * scale));
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, padding * scale, padding * scale, drawW * scale, drawH * scale);
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const alpha = new Uint8Array(canvas.width * canvas.height);
+    for (let i = 0; i < alpha.length; i++) alpha[i] = image.data[i * 4 + 3];
+    const distances = distanceTransformFromAlpha(alpha, canvas.width, canvas.height);
+    if (!distances) return { canvas, scale, padding };
+    const radius = Math.max(0, radiusPx * scale);
+    const feather = Math.max(1, 1.35 * scale);
+    const output = ctx.createImageData(canvas.width, canvas.height);
+    for (let i = 0; i < distances.length; i++) {
+      const coverage = clamp((radius + feather - Math.sqrt(distances[i])) / feather, 0, 1);
+      const p = i * 4;
+      output.data[p] = 255;
+      output.data[p + 1] = 255;
+      output.data[p + 2] = 255;
+      output.data[p + 3] = Math.round(coverage * 255);
+    }
+    ctx.putImageData(output, 0, 0);
+    return { canvas, scale, padding };
+  }
+
   function drawMaskStroke(ctx, img, color, widthPx, dw, dh) {
     if (widthPx <= 0) return;
-    const padding = Math.ceil(widthPx + 2);
-    const mask = tintedMask(img, color, dw, dh, padding);
-    const scaleX = (dw + padding * 2) / mask.canvas.width;
-    const scaleY = (dh + padding * 2) / mask.canvas.height;
+    const padding = Math.ceil(widthPx + 3);
+    const silhouette = createSilhouette(img, dw, dh, padding, widthPx);
+    const tinted = document.createElement('canvas');
+    tinted.width = silhouette.canvas.width;
+    tinted.height = silhouette.canvas.height;
+    const tintedCtx = tinted.getContext('2d');
+    tintedCtx.drawImage(silhouette.canvas, 0, 0);
+    tintedCtx.globalCompositeOperation = 'source-in';
+    tintedCtx.fillStyle = color;
+    tintedCtx.fillRect(0, 0, tinted.width, tinted.height);
     ctx.save();
-    const steps = 16;
-    for (let i = 0; i < steps; i++) {
-      const angle = (Math.PI * 2 * i) / steps;
-      const ox = Math.cos(angle) * widthPx;
-      const oy = Math.sin(angle) * widthPx;
-      ctx.drawImage(
-        mask.canvas,
-        -dw / 2 - padding + ox,
-        -dh / 2 - padding + oy,
-        mask.canvas.width * scaleX,
-        mask.canvas.height * scaleY
-      );
-    }
+    ctx.drawImage(tinted, -dw / 2 - padding, -dh / 2 - padding, dw + padding * 2, dh + padding * 2);
     ctx.restore();
   }
 
-  function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind) {
+  function snapshotCanvas(canvas) {
+    const scale = Math.min(1, 2200 / Math.max(canvas.width, canvas.height));
+    const snapshot = document.createElement('canvas');
+    snapshot.width = Math.max(1, Math.round(canvas.width * scale));
+    snapshot.height = Math.max(1, Math.round(canvas.height * scale));
+    snapshot.getContext('2d').drawImage(canvas, 0, 0, snapshot.width, snapshot.height);
+    return { canvas: snapshot, scale };
+  }
+
+  function drawBackdropBlur(ctx, snapshot, img, settings, dw, dh, effectScale) {
+    if (!settings.blurEnabled || !snapshot) return;
+    const blurPx = Math.max(0.5, settings.blurAmount * effectScale);
+    const expandPx = Math.max(0, settings.blurExpand * effectScale);
+    const padding = Math.ceil(blurPx * 2.2 + expandPx + 4);
+    const logicalW = dw + padding * 2;
+    const logicalH = dh + padding * 2;
+    const renderScale = Math.min(1, 1600 / Math.max(logicalW, logicalH));
+
+    const sampled = document.createElement('canvas');
+    sampled.width = Math.max(1, Math.round(logicalW * renderScale));
+    sampled.height = Math.max(1, Math.round(logicalH * renderScale));
+    const sampledCtx = sampled.getContext('2d');
+    const current = ctx.getTransform();
+    const inverse = current.inverse();
+    sampledCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+    sampledCtx.translate(logicalW / 2, logicalH / 2);
+    sampledCtx.transform(inverse.a, inverse.b, inverse.c, inverse.d, inverse.e, inverse.f);
+    sampledCtx.scale(1 / snapshot.scale, 1 / snapshot.scale);
+    sampledCtx.drawImage(snapshot.canvas, 0, 0);
+    sampledCtx.setTransform(1, 0, 0, 1, 0, 0);
+
+    const blurred = document.createElement('canvas');
+    blurred.width = sampled.width;
+    blurred.height = sampled.height;
+    const blurredCtx = blurred.getContext('2d');
+    blurredCtx.filter = `blur(${Math.max(0.1, blurPx * renderScale)}px)`;
+    blurredCtx.drawImage(sampled, 0, 0);
+    blurredCtx.filter = 'none';
+
+    const silhouette = createSilhouette(img, dw, dh, padding, expandPx, 1600);
+    blurredCtx.globalCompositeOperation = 'destination-in';
+    blurredCtx.drawImage(silhouette.canvas, 0, 0, blurred.width, blurred.height);
+    blurredCtx.globalCompositeOperation = 'source-over';
+
+    ctx.save();
+    ctx.globalAlpha = clamp(settings.blurOpacity, 0, 100) / 100;
+    ctx.drawImage(blurred, -dw / 2 - padding, -dh / 2 - padding, logicalW, logicalH);
+    ctx.restore();
+  }
+
+  function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind, snapshot = null) {
     if (!img) return;
     const sourceW = img.naturalWidth;
     const sourceH = img.naturalHeight;
@@ -1278,29 +1415,19 @@
     if (anchor.startsWith('t')) cy = offsetY + dh / 2;
     if (anchor.startsWith('b')) cy = boxH - offsetY - dh / 2;
 
-    const unit = Math.min(dw, dh);
+    const effectScale = clamp(Math.min(boxW, boxH) / 2000, 0.18, 4);
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate((settings.rotate || 0) * Math.PI / 180);
 
-    if (settings.blurEnabled) {
-      drawMaskBlur(
-        ctx,
-        img,
-        settings.blurColor,
-        settings.blurOpacity / 100,
-        unit * (settings.blurWidth / 100),
-        dw,
-        dh
-      );
-    }
+    drawBackdropBlur(ctx, snapshot, img, settings, dw, dh, effectScale);
     if (settings.glowEnabled) {
       drawMaskBlur(
         ctx,
         img,
         settings.glowColor,
         settings.glowOpacity / 100,
-        unit * (settings.glowBlur / 100),
+        settings.glowBlur * effectScale,
         dw,
         dh
       );
@@ -1308,7 +1435,7 @@
     if (settings.strokeEnabled) {
       ctx.save();
       ctx.globalAlpha = 0.92;
-      drawMaskStroke(ctx, img, settings.strokeColor, unit * (settings.strokeWidth / 100), dw, dh);
+      drawMaskStroke(ctx, img, settings.strokeColor, settings.strokeWidth * effectScale, dw, dh);
       ctx.restore();
     }
 
@@ -1317,9 +1444,9 @@
     ctx.globalCompositeOperation = BLEND_MODES[settings.blend] || 'source-over';
     if (settings.shadowEnabled) {
       ctx.shadowColor = hexToRgba(settings.shadowColor, settings.shadowOpacity / 100);
-      ctx.shadowBlur = unit * (settings.shadowBlur / 100);
-      ctx.shadowOffsetX = unit * (settings.shadowX / 100);
-      ctx.shadowOffsetY = unit * (settings.shadowY / 100);
+      ctx.shadowBlur = settings.shadowBlur * effectScale;
+      ctx.shadowOffsetX = settings.shadowX * effectScale;
+      ctx.shadowOffsetY = settings.shadowY * effectScale;
     }
     ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
     ctx.restore();
@@ -1327,8 +1454,10 @@
   }
 
   function drawImportedMarks(ctx, boxW, boxH) {
-    drawCompositeAsset(ctx, state.assets.frame?.image, boxW, boxH, state.marks.frame, 'frame');
-    drawCompositeAsset(ctx, state.assets.small?.image, boxW, boxH, state.marks.small, 'small');
+    const frameSnapshot = state.marks.frame.blurEnabled ? snapshotCanvas(ctx.canvas) : null;
+    drawCompositeAsset(ctx, state.assets.frame?.image, boxW, boxH, state.marks.frame, 'frame', frameSnapshot);
+    const smallSnapshot = state.marks.small.blurEnabled ? snapshotCanvas(ctx.canvas) : null;
+    drawCompositeAsset(ctx, state.assets.small?.image, boxW, boxH, state.marks.small, 'small', smallSnapshot);
   }
 
   function watermarkLongEdge(img) {
@@ -1751,7 +1880,7 @@
         readMarkControl(control);
         if (control.type === 'range') {
           const output = document.querySelector(`[data-value-for="${control.dataset.mark}"]`);
-          syncRange(control, output, control.dataset.mark.endsWith('.rotate') ? '°' : '%');
+          syncRange(control, output, output?.dataset.suffix || (control.dataset.mark.endsWith('.rotate') ? '°' : '%'));
         }
         updateEffectVisibility();
         persistSettings();
