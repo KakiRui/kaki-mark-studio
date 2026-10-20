@@ -12,7 +12,7 @@ A local-first batch image marking workspace for artists, photographers and small
   - **Watermark frame** — import a frame, replace its ink color while preserving the detected foreground, add a shadow, and choose whether it is applied to each cell or the finished sheet.
   - **Small watermark** — import a logo or signature with nine-point placement, offsets, scale, rotation, shadow, and cell-or-sheet compositing.
 - **Live preview** — edits are reflected immediately, with no server round-trip.
-- **Optional preset** — click the active quick preset again to clear it and use only imported watermark layers.
+- **Independent quick presets** — signature presets and the full-screen tiled preset keep separate settings, can run together, and each can be cleared by clicking its active card again.
 - **Fine-grained controls** — shadow distances and text outline strength use fine steps and scale proportionally with the rendered canvas.
 - **Batch export** — write JPEG or PNG at a locked 2400 px long edge by default, unlock other sizes when needed, download one image, package the set as a ZIP, or load every finished image into an iOS-friendly long-press gallery.
 - **First-run guide** — an animated three-step introduction appears on the first visit and can be reopened from the header.
@@ -34,13 +34,13 @@ Then visit `http://localhost:8080`.
 
 1. Drop in a group of images.
 2. Choose **Single-image watermark** or **Contact-sheet collage**.
-3. Pick a shared quick preset, or click the active preset again to clear it, then optionally layer a full-screen watermark, frame, or small watermark.
+3. Pick a signature preset and/or the full-screen tiled preset; click an active preset again to clear that group.
 4. Adjust opacity, blend modes, placement, and edge effects in the live preview.
 5. Export the current image or every page as a ZIP.
 
 In collage mode, a full-screen layer set to **before collage** is composited onto every source photograph before the contact sheet is assembled. **After collage** layers cover the finished sheet. Watermark frames and small watermarks can independently target every cell or the finished sheet.
 
-Automatic ratio mode groups similar image shapes together even when they are not adjacent, then sizes each page to the actual number of images instead of leaving blank cells. Fixed presets and custom width/height ratios use a consistent crop frame.
+Automatic ratio mode groups only consecutive images with similar shapes, so the original import order is always preserved. A later image never jumps backward into an earlier ratio group. Fixed presets and custom width/height ratios use a consistent crop frame.
 
 The loaded-results gallery uses a two-column masonry-style flow based on each image's real aspect ratio, so portrait, square, and landscape outputs do not force empty card space.
 

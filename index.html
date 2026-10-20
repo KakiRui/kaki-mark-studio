@@ -87,8 +87,21 @@
 
         <div class="mode-panel" id="watermarkPanel" hidden>
           <div class="signature-preset-workspace" id="signaturePresetWorkspace">
+          <div class="module-quick-preset">
+            <span>署名快捷预设</span>
+            <div class="preset-grid">
+              <button class="preset-card" type="button" data-signature-preset-option="gradient">
+                <span class="preset-swatch swatch-gradient">KAKI</span>
+                <span><strong>渐变预览</strong><small>居中署名</small></span>
+              </button>
+              <button class="preset-card" type="button" data-signature-preset-option="band">
+                <span class="preset-swatch swatch-band">KAKI / 001</span>
+                <span><strong>底栏信息</strong><small>清晰署名</small></span>
+              </button>
+            </div>
+          </div>
           <details class="preset-settings" id="presetSettingsDetails" open>
-            <summary>预设参数 <span>按当前预设调整</span></summary>
+            <summary>署名预设参数 <span>按当前署名预设调整</span></summary>
             <div class="preset-settings-body" id="presetSettingsBody">
 
           <div class="control-group compact-grid two-up" id="gradientOptions" hidden>
@@ -137,27 +150,6 @@
             <div>
               <label for="watermarkMargin">边距 <output id="watermarkMarginValue">4%</output></label>
               <input id="watermarkMargin" type="range" min="2" max="15" step="0.5" value="4" data-watermark="margin">
-            </div>
-          </div>
-
-          <div class="control-group compact-grid two-up" id="tiledOptions" hidden>
-            <div class="span-two">
-              <label for="watermarkBlend">叠加效果</label>
-              <select id="watermarkBlend" data-watermark="blend">
-                <option value="normal">正常</option>
-                <option value="overlay">叠加</option>
-                <option value="soft-light">柔光</option>
-                <option value="screen">滤色</option>
-                <option value="multiply">正片叠底</option>
-              </select>
-            </div>
-            <div>
-              <label for="watermarkRotate">倾斜角度 <output id="watermarkRotateValue">-24°</output></label>
-              <input id="watermarkRotate" type="range" min="-45" max="45" step="1" value="-24" data-watermark="rotate">
-            </div>
-            <div>
-              <label for="watermarkGap">重复间距 <output id="watermarkGapValue">28</output></label>
-              <input id="watermarkGap" type="range" min="8" max="48" step="1" value="28" data-watermark="gap">
             </div>
           </div>
 
@@ -249,21 +241,87 @@
               <div class="module-quick-preset">
                 <span>快捷预设</span>
                 <div class="preset-grid">
-                  <button class="preset-card" type="button" data-preset="tiled">
+                  <button class="preset-card active" type="button" data-fullscreen-preset-option="tiled">
                     <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
                     <span><strong>平铺水印</strong><small>全屏署名</small></span>
                   </button>
-                  <button class="preset-card" type="button" data-preset="gradient">
-                    <span class="preset-swatch swatch-gradient">KAKI</span>
-                    <span><strong>渐变预览</strong><small>居中署名</small></span>
-                  </button>
-                  <button class="preset-card" type="button" data-preset="band">
-                    <span class="preset-swatch swatch-band">KAKI / 001</span>
-                    <span><strong>底栏信息</strong><small>清晰署名</small></span>
-                  </button>
                 </div>
               </div>
-              <div class="fullscreen-preset-mount" id="fullscreenPresetMount"></div>
+              <details class="preset-settings" id="fullscreenPresetDetails" open>
+                <summary>平铺水印参数 <span>独立于署名预设</span></summary>
+                <div class="preset-settings-body">
+                  <div class="field-block">
+                    <label for="fullscreenPresetText">水印文字</label>
+                    <input id="fullscreenPresetText" type="text" maxlength="60" autocomplete="off" data-fullscreen-preset="text">
+                  </div>
+                  <div class="control-group compact-grid two-up">
+                    <div>
+                      <label for="fullscreenPresetOpacity">不透明度 <output id="fullscreenPresetOpacityValue">18%</output></label>
+                      <input id="fullscreenPresetOpacity" type="range" min="5" max="100" step="1" value="18" data-fullscreen-preset="opacity">
+                    </div>
+                    <div>
+                      <label for="fullscreenPresetSize">字号 <output id="fullscreenPresetSizeValue">3.8%</output></label>
+                      <input id="fullscreenPresetSize" type="range" min="1" max="18" step="0.1" value="3.8" data-fullscreen-preset="size">
+                    </div>
+                  </div>
+                  <div class="control-group compact-grid two-up">
+                    <div>
+                      <label for="fullscreenPresetRotate">倾斜角度 <output id="fullscreenPresetRotateValue">-24°</output></label>
+                      <input id="fullscreenPresetRotate" type="range" min="-45" max="45" step="1" value="-24" data-fullscreen-preset="rotate">
+                    </div>
+                    <div>
+                      <label for="fullscreenPresetGap">重复间距 <output id="fullscreenPresetGapValue">30</output></label>
+                      <input id="fullscreenPresetGap" type="range" min="8" max="48" step="1" value="30" data-fullscreen-preset="gap">
+                    </div>
+                  </div>
+                  <div class="two-up control-group">
+                    <div>
+                      <label for="fullscreenPresetBlend">叠加效果</label>
+                      <select id="fullscreenPresetBlend" data-fullscreen-preset="blend">
+                        <option value="normal">正常</option>
+                        <option value="overlay">叠加</option>
+                        <option value="soft-light">柔光</option>
+                        <option value="screen">滤色</option>
+                        <option value="multiply">正片叠底</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="fullscreenPresetPlacement">拼图中的位置</label>
+                      <select id="fullscreenPresetPlacement" data-fullscreen-preset="placement">
+                        <option value="cell">每张小图 · 拼图前</option>
+                        <option value="sheet">整张拼图 · 拼图后</option>
+                      </select>
+                    </div>
+                  </div>
+                  <details class="more-options">
+                    <summary>字体与描边 <span>细节调整</span></summary>
+                    <div class="details-body">
+                      <div class="field-block">
+                        <label for="fullscreenPresetFont">字体</label>
+                        <select id="fullscreenPresetFont" data-fullscreen-preset="font">
+                          <option value="sans">现代黑体</option>
+                          <option value="serif">典雅宋体</option>
+                          <option value="mono">等宽字体</option>
+                        </select>
+                      </div>
+                      <div class="two-up">
+                        <div class="color-field">
+                          <label for="fullscreenPresetColor">文字颜色</label>
+                          <input id="fullscreenPresetColor" type="color" value="#ffffff" data-fullscreen-preset="color">
+                        </div>
+                        <div class="color-field">
+                          <label for="fullscreenPresetStrokeColor">描边颜色</label>
+                          <input id="fullscreenPresetStrokeColor" type="color" value="#111111" data-fullscreen-preset="strokeColor">
+                        </div>
+                      </div>
+                      <div>
+                        <label for="fullscreenPresetStroke">描边强度 <output id="fullscreenPresetStrokeValue">0%</output></label>
+                        <input id="fullscreenPresetStroke" type="range" min="0" max="12" step="0.5" value="0" data-fullscreen-preset="stroke">
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              </details>
               <div class="asset-empty" id="fullscreenEmpty">
                 <div><strong id="fullscreenEmptyTitle">还没有全屏水印</strong><span id="fullscreenEmptyHint">支持 PNG / WEBP · 最多 8 层</span></div>
                 <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>

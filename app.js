@@ -4,12 +4,12 @@
   const MAX_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
-  const STORAGE_KEY = 'kaki-mark-studio-settings-v6';
+  const STORAGE_KEY = 'kaki-mark-studio-settings-v7';
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const PREVIEW_EDGE = 1500;
 
   const WATERMARK_DEFAULTS = Object.freeze({
-    preset: 'tiled',
+    preset: 'none',
     text: 'KAKI STUDIO',
     size: 3.2,
     opacity: 82,
@@ -73,12 +73,30 @@
   });
 
   const PRESETS = Object.freeze({
-    tiled: { opacity: 18, size: 3.8, stroke: 0, gap: 30 },
     gradient: { opacity: 94, size: 5.2, stroke: 2, gradientStrength: 92, gradientHeight: 48 },
     band: { opacity: 92, size: 3.5, stroke: 0 }
   });
 
-  const PRESET_ALIASES = { corner: 'tiled', center: 'gradient', double: 'tiled' };
+  const PRESET_ALIASES = { corner: 'none', center: 'gradient', double: 'none' };
+
+  const FULLSCREEN_PRESET_DEFAULTS = Object.freeze({
+    preset: 'tiled',
+    text: 'KAKI STUDIO',
+    size: 3.8,
+    opacity: 18,
+    rotate: -24,
+    gap: 30,
+    blend: 'normal',
+    font: 'sans',
+    color: '#ffffff',
+    strokeColor: '#111111',
+    stroke: 0,
+    placement: 'cell'
+  });
+
+  const FULLSCREEN_PRESETS = Object.freeze({
+    tiled: { opacity: 18, size: 3.8, stroke: 0, gap: 30, blend: 'normal' }
+  });
 
   const FRAME_DEFAULTS = Object.freeze({
     scale: 100,
@@ -137,6 +155,7 @@
     activePage: 0,
     mode: 'watermark',
     watermark: { ...WATERMARK_DEFAULTS },
+    fullscreenPreset: { ...FULLSCREEN_PRESET_DEFAULTS },
     collage: { ...COLLAGE_DEFAULTS },
     marks: {
       frame: { ...FRAME_DEFAULTS },
@@ -196,9 +215,8 @@
       'resetSettingsBtn','dropZone','fileInput','queueView','queueStrip','libraryMeta',
       'clearImagesBtn','watermarkTab','collageTab','watermarkPanel','collagePanel',
       'watermarkText','watermarkSize','watermarkSizeValue','watermarkOpacity','watermarkOpacityValue',
-      'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkRotate',
-      'watermarkRotateValue','watermarkGap','watermarkGapValue','watermarkBlend','watermarkFont','watermarkColor',
-      'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions','tiledOptions',
+      'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkFont','watermarkColor',
+      'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions',
       'bandOptions','bandBackground','bandOpacity','bandOpacityValue','bandRightCombo',
       'bandRightPreview','bandRightEnabled','bandRightFields','bandRightMode',
       'bandCustomField','bandCustomText','bandPriceField','bandPrice',
@@ -220,7 +238,13 @@
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
       'previewAllBtn','resultGallery','resultGrid',
       'numberOptions','fullscreenCount','fullscreenEmpty','fullscreenEmptyTitle','fullscreenEmptyHint',
-      'fullscreenInput','addFullscreenBtn','fullscreenList','fullscreenPresetMount',
+      'fullscreenInput','addFullscreenBtn','fullscreenList','fullscreenPresetDetails',
+      'fullscreenPresetText','fullscreenPresetOpacity','fullscreenPresetOpacityValue',
+      'fullscreenPresetSize','fullscreenPresetSizeValue','fullscreenPresetRotate',
+      'fullscreenPresetRotateValue','fullscreenPresetGap','fullscreenPresetGapValue',
+      'fullscreenPresetBlend','fullscreenPresetPlacement','fullscreenPresetFont',
+      'fullscreenPresetColor','fullscreenPresetStrokeColor','fullscreenPresetStroke',
+      'fullscreenPresetStrokeValue',
       'signaturePresetWorkspace','presetSettingsDetails',
       'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
       'frameName','frameRemoveBtn','frameTintCombo','frameShadowControls',
@@ -230,11 +254,13 @@
       'imagePreviewOverlay','imagePreviewImg','imagePreviewTitle','imagePreviewMeta','imagePreviewCloseBtn'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
-    el.presetCards = Array.from(document.querySelectorAll('[data-preset]'));
+    el.signaturePresetCards = Array.from(document.querySelectorAll('[data-signature-preset-option]'));
+    el.fullscreenPresetCards = Array.from(document.querySelectorAll('[data-fullscreen-preset-option]'));
     el.modeTabs = Array.from(document.querySelectorAll('[data-mode]'));
     el.watermarkControls = Array.from(document.querySelectorAll('[data-watermark]'));
     el.collageControls = Array.from(document.querySelectorAll('[data-collage]'));
     el.markControls = Array.from(document.querySelectorAll('[data-mark]'));
+    el.fullscreenPresetControls = Array.from(document.querySelectorAll('[data-fullscreen-preset]'));
     el.collageMarkPlacements = Array.from(document.querySelectorAll('.collage-mark-placement'));
     el.exportControls = Array.from(document.querySelectorAll('[data-export]'));
   }
@@ -266,8 +292,11 @@
     syncRange(el.watermarkSize, el.watermarkSizeValue);
     syncRange(el.watermarkOpacity, el.watermarkOpacityValue);
     syncRange(el.watermarkMargin, el.watermarkMarginValue);
-    syncRange(el.watermarkRotate, el.watermarkRotateValue, '°');
-    syncRange(el.watermarkGap, el.watermarkGapValue, '');
+    syncRange(el.fullscreenPresetOpacity, el.fullscreenPresetOpacityValue);
+    syncRange(el.fullscreenPresetSize, el.fullscreenPresetSizeValue);
+    syncRange(el.fullscreenPresetRotate, el.fullscreenPresetRotateValue, '°');
+    syncRange(el.fullscreenPresetGap, el.fullscreenPresetGapValue, '');
+    syncRange(el.fullscreenPresetStroke, el.fullscreenPresetStrokeValue);
     syncRange(el.watermarkStroke, el.watermarkStrokeValue);
     syncRange(el.bandOpacity, el.bandOpacityValue);
     syncRange(el.gradientStrength, el.gradientStrengthValue);
@@ -296,9 +325,6 @@
     el.watermarkOpacity.value = state.watermark.opacity;
     el.watermarkPosition.value = state.watermark.position;
     el.watermarkMargin.value = state.watermark.margin;
-    el.watermarkRotate.value = state.watermark.rotate;
-    el.watermarkGap.value = state.watermark.gap;
-    el.watermarkBlend.value = state.watermark.blend;
     el.watermarkFont.value = state.watermark.font;
     el.watermarkColor.value = state.watermark.color;
     el.strokeColor.value = state.watermark.strokeColor;
@@ -313,6 +339,18 @@
     el.bandCustomText.value = state.watermark.bandCustomText;
     el.bandPrice.value = state.watermark.bandPrice;
     updateBandUi();
+
+    el.fullscreenPresetText.value = state.fullscreenPreset.text;
+    el.fullscreenPresetOpacity.value = state.fullscreenPreset.opacity;
+    el.fullscreenPresetSize.value = state.fullscreenPreset.size;
+    el.fullscreenPresetRotate.value = state.fullscreenPreset.rotate;
+    el.fullscreenPresetGap.value = state.fullscreenPreset.gap;
+    el.fullscreenPresetBlend.value = state.fullscreenPreset.blend;
+    el.fullscreenPresetPlacement.value = state.fullscreenPreset.placement;
+    el.fullscreenPresetFont.value = state.fullscreenPreset.font;
+    el.fullscreenPresetColor.value = state.fullscreenPreset.color;
+    el.fullscreenPresetStrokeColor.value = state.fullscreenPreset.strokeColor;
+    el.fullscreenPresetStroke.value = state.fullscreenPreset.stroke;
 
     el.collageRatio.value = state.collage.ratio;
     el.customRatioWidth.value = state.collage.customWidth;
@@ -350,7 +388,12 @@
     el.filePrefix.value = state.export.prefix;
     updateExportUi();
 
-    el.presetCards.forEach((card) => card.classList.toggle('active', card.dataset.preset === state.watermark.preset));
+    el.signaturePresetCards.forEach((card) => {
+      card.classList.toggle('active', card.dataset.signaturePresetOption === state.watermark.preset);
+    });
+    el.fullscreenPresetCards.forEach((card) => {
+      card.classList.toggle('active', card.dataset.fullscreenPresetOption === state.fullscreenPreset.preset);
+    });
     el.modeTabs.forEach((tab) => {
       const active = tab.dataset.mode === state.mode;
       tab.classList.toggle('active', active);
@@ -358,18 +401,20 @@
     });
     el.watermarkTab.setAttribute('aria-controls', 'watermarkPanel');
     el.collageTab.setAttribute('aria-controls', 'collagePanel');
-    el.watermarkPanel.hidden = true;
+    el.watermarkPanel.hidden = false;
     el.collagePanel.hidden = state.mode !== 'collage';
 
     el.numberOptions.hidden = !state.collage.numberEnabled;
     el.numberStyleSettings.hidden = !state.collage.numberEnabled;
     el.soldOptions.hidden = !state.collage.soldEnabled;
     el.cornerOptions.hidden = true;
-    el.tiledOptions.hidden = state.watermark.preset !== 'tiled';
     el.gradientOptions.hidden = state.watermark.preset !== 'gradient';
     el.gradientHeightOptions.hidden = state.watermark.preset !== 'gradient';
     el.bandOptions.hidden = state.watermark.preset !== 'band';
-    el.presetSettingsDetails.hidden = state.watermark.preset === 'none';
+    el.presetSettingsDetails.hidden = false;
+    el.presetSettingsDetails.open = state.watermark.preset !== 'none';
+    el.fullscreenPresetDetails.hidden = false;
+    el.fullscreenPresetDetails.open = state.fullscreenPreset.preset !== 'none';
 
     el.markControls.forEach((control) => {
       const value = getPath(state.marks, control.dataset.mark);
@@ -421,6 +466,7 @@
     try {
       const payload = {
         watermark: state.watermark,
+        fullscreenPreset: state.fullscreenPreset,
         collage: state.collage,
         marks: state.marks,
         export: state.export,
@@ -436,6 +482,9 @@
       if (!raw) return;
       const data = JSON.parse(raw);
       if (data.watermark && typeof data.watermark === 'object') Object.assign(state.watermark, data.watermark);
+      if (data.fullscreenPreset && typeof data.fullscreenPreset === 'object') {
+        Object.assign(state.fullscreenPreset, data.fullscreenPreset);
+      }
       if (data.collage && typeof data.collage === 'object') Object.assign(state.collage, data.collage);
       if (data.marks && typeof data.marks === 'object') {
         if (data.marks.frame) Object.assign(state.marks.frame, data.marks.frame);
@@ -472,6 +521,20 @@
     wm.bandRightEnabled = Boolean(wm.bandRightEnabled);
     wm.bandCustomText = String(wm.bandCustomText ?? '').slice(0, 40);
     wm.bandPrice = String(wm.bandPrice ?? '').replace(/[^\d.]/g, '').slice(0, 24);
+
+    const fp = state.fullscreenPreset;
+    fp.text = String(fp.text ?? FULLSCREEN_PRESET_DEFAULTS.text).slice(0, 60);
+    fp.size = clamp(numberOr(fp.size, FULLSCREEN_PRESET_DEFAULTS.size), 1, 18);
+    fp.opacity = clamp(numberOr(fp.opacity, FULLSCREEN_PRESET_DEFAULTS.opacity), 5, 100);
+    fp.rotate = clamp(numberOr(fp.rotate, FULLSCREEN_PRESET_DEFAULTS.rotate), -45, 45);
+    fp.gap = clamp(numberOr(fp.gap, FULLSCREEN_PRESET_DEFAULTS.gap), 8, 48);
+    fp.stroke = clamp(numberOr(fp.stroke, FULLSCREEN_PRESET_DEFAULTS.stroke), 0, 12);
+    if (fp.preset !== 'none' && !FULLSCREEN_PRESETS[fp.preset]) fp.preset = FULLSCREEN_PRESET_DEFAULTS.preset;
+    if (!BLEND_MODES[fp.blend]) fp.blend = FULLSCREEN_PRESET_DEFAULTS.blend;
+    if (!FONT_STACKS[fp.font]) fp.font = FULLSCREEN_PRESET_DEFAULTS.font;
+    if (!/^#[0-9a-f]{6}$/i.test(fp.color)) fp.color = FULLSCREEN_PRESET_DEFAULTS.color;
+    if (!/^#[0-9a-f]{6}$/i.test(fp.strokeColor)) fp.strokeColor = FULLSCREEN_PRESET_DEFAULTS.strokeColor;
+    if (!['cell','sheet'].includes(fp.placement)) fp.placement = FULLSCREEN_PRESET_DEFAULTS.placement;
 
     const cl = state.collage;
     cl.rows = clamp(Math.round(numberOr(cl.rows, COLLAGE_DEFAULTS.rows)), 1, 8);
@@ -543,6 +606,7 @@
 
   function resetSettings() {
     state.watermark = { ...WATERMARK_DEFAULTS };
+    state.fullscreenPreset = { ...FULLSCREEN_PRESET_DEFAULTS };
     state.collage = { ...COLLAGE_DEFAULTS };
     state.marks = {
       frame: { ...FRAME_DEFAULTS },
@@ -555,7 +619,7 @@
     schedulePreview();
   }
 
-  function applyPreset(name) {
+  function applySignaturePreset(name) {
     name = PRESET_ALIASES[name] || name;
     if (!PRESETS[name]) return;
     if (state.watermark.preset === name) {
@@ -569,6 +633,23 @@
     Object.assign(state.watermark, PRESETS[name]);
     applyUiFromState();
     el.presetSettingsDetails.open = true;
+    persistSettings();
+    schedulePreview();
+  }
+
+  function applyFullscreenPreset(name) {
+    if (!FULLSCREEN_PRESETS[name]) return;
+    if (state.fullscreenPreset.preset === name) {
+      state.fullscreenPreset.preset = 'none';
+      applyUiFromState();
+      persistSettings();
+      schedulePreview();
+      return;
+    }
+    state.fullscreenPreset.preset = name;
+    Object.assign(state.fullscreenPreset, FULLSCREEN_PRESETS[name]);
+    applyUiFromState();
+    el.fullscreenPresetDetails.open = true;
     persistSettings();
     schedulePreview();
   }
@@ -1109,19 +1190,24 @@
     const groups = [];
 
     if (state.collage.ratio === 'auto') {
+      let currentGroup = null;
       indexed.forEach((item) => {
         const ratio = clamp(item.record.width / item.record.height, 0.2, 5);
-        let group = groups.find((candidate) => Math.abs(candidate.ratio - ratio) / candidate.ratio <= 0.075);
-        if (!group) {
-          group = { ratio, ratioSum: 0, ratioCount: 0, firstIndex: item.fileIndex, items: [] };
-          groups.push(group);
+        if (!currentGroup || Math.abs(currentGroup.ratio - ratio) / currentGroup.ratio > 0.025) {
+          currentGroup = {
+            ratio,
+            ratioSum: 0,
+            ratioCount: 0,
+            firstIndex: item.fileIndex,
+            items: []
+          };
+          groups.push(currentGroup);
         }
-        group.items.push(item);
-        group.ratioSum += ratio;
-        group.ratioCount++;
-        group.ratio = clamp(group.ratioSum / group.ratioCount, 0.2, 5);
+        currentGroup.items.push(item);
+        currentGroup.ratioSum += ratio;
+        currentGroup.ratioCount++;
+        currentGroup.ratio = clamp(currentGroup.ratioSum / currentGroup.ratioCount, 0.2, 5);
       });
-      groups.sort((a, b) => a.firstIndex - b.firstIndex);
     } else {
       groups.push({
         ratio: selectedCollageRatio(),
@@ -1207,9 +1293,9 @@
     return String(template || '').replace(/\{n\}/gi, String(number)).replace(/\{nn\}/gi, pad(number));
   }
 
-  function fitFontSize(ctx, text, baseSize, maxWidth) {
+  function fitFontSize(ctx, text, baseSize, maxWidth, fontKey = state.watermark.font) {
     let size = baseSize;
-    ctx.font = `600 ${size}px ${FONT_STACKS[state.watermark.font] || FONT_STACKS.sans}`;
+    ctx.font = `600 ${size}px ${FONT_STACKS[fontKey] || FONT_STACKS.sans}`;
     const width = ctx.measureText(text).width;
     if (width > maxWidth && width > 0) size *= maxWidth / width;
     return Math.max(8, size);
@@ -1234,9 +1320,6 @@
     ctx.textBaseline = baseline;
     ctx.lineJoin = 'round';
     ctx.globalAlpha = (wm.opacity / 100) * alpha;
-    if (wm.preset === 'tiled') {
-      ctx.globalCompositeOperation = BLEND_MODES[wm.blend] || 'source-over';
-    }
     if (wm.stroke > 0) {
       ctx.strokeStyle = wm.strokeColor;
       ctx.lineWidth = Math.max(0.5, size * (wm.stroke / 100) * 1.8);
@@ -1244,6 +1327,49 @@
     }
     ctx.fillStyle = wm.color;
     ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  function drawFullscreenPreset(ctx, boxW, boxH, number) {
+    const fp = state.fullscreenPreset;
+    if (fp.preset === 'none') return;
+    const text = resolveWatermarkText(fp.text, number).trim();
+    if (!text) return;
+    const minDim = Math.min(boxW, boxH);
+    const baseSize = minDim * (fp.size / 100);
+    const size = fitFontSize(ctx, text, baseSize, boxW * 0.5, fp.font);
+    const spacing = size * (fp.gap / 10);
+    const diagonal = Math.hypot(boxW, boxH);
+    ctx.save();
+    ctx.translate(boxW / 2, boxH / 2);
+    ctx.rotate(fp.rotate * Math.PI / 180);
+    ctx.translate(-boxW / 2, -boxH / 2);
+    ctx.font = `600 ${size}px ${FONT_STACKS[fp.font] || FONT_STACKS.sans}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = fp.opacity / 100;
+    ctx.globalCompositeOperation = BLEND_MODES[fp.blend] || 'source-over';
+    const measured = ctx.measureText(text).width;
+    const stepX = Math.max(spacing, measured + size * 1.6);
+    const stepY = Math.max(size * 3.5, size * (fp.gap / 6));
+    const start = -boxW * 1.1;
+    const endX = boxW * 2.1;
+    const endY = boxH * 2.1;
+    for (let y = -boxH * 0.7, row = 0; y < endY; y += stepY, row++) {
+      const offset = row % 2 ? stepX / 2 : 0;
+      for (let x = start - offset; x < endX; x += stepX) {
+        if ((x + y) > -diagonal && (x + y) < diagonal * 2.2) {
+          if (fp.stroke > 0) {
+            ctx.strokeStyle = fp.strokeColor;
+            ctx.lineWidth = Math.max(0.5, size * (fp.stroke / 100) * 1.8);
+            ctx.strokeText(text, x, y);
+          }
+          ctx.fillStyle = fp.color;
+          ctx.fillText(text, x, y);
+        }
+      }
+    }
     ctx.restore();
   }
 
@@ -1266,36 +1392,7 @@
     }
     ctx.translate(dims.x, dims.y);
 
-    if (preset === 'tiled') {
-      const size = fitFontSize(ctx, text, baseSize, boxW * 0.5);
-      const spacing = size * (wm.gap / 10);
-      const angle = wm.rotate * Math.PI / 180;
-      const diagonal = Math.hypot(boxW, boxH);
-      const startX = boxW / 2 - diagonal / 2;
-      const startY = boxH / 2 - diagonal / 2;
-      const cols = Math.ceil(diagonal / Math.max(1, spacing)) + 4;
-      const rows = Math.ceil(diagonal / Math.max(1, spacing * 0.62)) + 4;
-      ctx.translate(boxW / 2, boxH / 2);
-      ctx.rotate(angle);
-      ctx.translate(-boxW / 2, -boxH / 2);
-      ctx.font = `600 ${size}px ${FONT_STACKS[wm.font] || FONT_STACKS.sans}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const measured = ctx.measureText(text).width;
-      const stepX = Math.max(spacing, measured + size * 1.6);
-      const stepY = Math.max(size * 3.5, size * (wm.gap / 6));
-      const start = -boxW * 1.1;
-      const endX = boxW * 2.1;
-      const endY = boxH * 2.1;
-      for (let y = -boxH * 0.7, row = 0; y < endY; y += stepY, row++) {
-        const offset = row % 2 ? stepX / 2 : 0;
-        for (let x = start - offset; x < endX; x += stepX) {
-          if ((x + y) > -diagonal && (x + y) < diagonal * 2.2) {
-            drawText(ctx, text, x, y, size, 'left', 'middle');
-          }
-        }
-      }
-    } else if (preset === 'gradient') {
+    if (preset === 'gradient') {
       const gradientHeight = boxH * (wm.gradientHeight / 100);
       const top = boxH - gradientHeight;
       const strength = clamp(wm.gradientStrength / 100, 0, 1);
@@ -1552,14 +1649,10 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     drawContain(ctx, img, 0, 0, width, height);
+    drawFullscreenPreset(ctx, width, height, index);
     drawFullscreenLayers(ctx, 0, 0, width, height);
-    if (state.watermark.preset === 'gradient' || state.watermark.preset === 'band') {
-      drawImportedMarks(ctx, width, height);
-      drawWatermark(ctx, width, height, index);
-    } else {
-      drawWatermark(ctx, width, height, index);
-      drawImportedMarks(ctx, width, height);
-    }
+    drawImportedMarks(ctx, width, height);
+    drawWatermark(ctx, width, height, index);
     return { width, height };
   }
 
@@ -1593,7 +1686,7 @@
     ctx.save();
     ctx.fillStyle = 'rgba(23,22,19,.73)';
     ctx.fillRect(x, y, w, h);
-    const size = Math.min(w, h) * 0.19;
+    const size = Math.min(w, h) * 0.23;
     ctx.font = `600 ${size}px ${FONT_STACKS.mono}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1691,6 +1784,12 @@
       roundedRect(ctx, x, y, base.cellW, base.cellH, base.cellW * 0.012);
       ctx.clip();
       drawCover(ctx, img, x, y, base.cellW, base.cellH);
+      if (state.fullscreenPreset.placement === 'cell') {
+        ctx.save();
+        ctx.translate(x, y);
+        drawFullscreenPreset(ctx, base.cellW, base.cellH, item.fileIndex);
+        ctx.restore();
+      }
       drawFullscreenLayers(ctx, x, y, base.cellW, base.cellH, 'before');
       if (state.marks.frame.placement === 'cell') {
         ctx.save();
@@ -1719,6 +1818,9 @@
         drawItemNumber(ctx, number, x, y, base.cellW, base.cellH);
       }
       ctx.restore();
+    }
+    if (state.fullscreenPreset.placement === 'sheet') {
+      drawFullscreenPreset(ctx, base.width, base.height, visible[0]?.fileIndex || 0);
     }
     drawFullscreenLayers(ctx, 0, 0, base.width, base.height, 'after');
     if (state.marks.frame.placement === 'sheet') {
@@ -2001,6 +2103,16 @@
     setPath(state.marks, path, value);
   }
 
+  function readFullscreenPresetControl(control) {
+    const key = control.dataset.fullscreenPreset;
+    if (!key) return;
+    if (control.type === 'range' || control.type === 'number') {
+      state.fullscreenPreset[key] = numberOr(control.value, FULLSCREEN_PRESET_DEFAULTS[key]);
+    } else {
+      state.fullscreenPreset[key] = control.value;
+    }
+  }
+
   function showWelcome() {
     el.welcomeOverlay.hidden = false;
     el.welcomeOverlay.classList.remove('is-closing');
@@ -2063,7 +2175,31 @@
     });
 
     el.modeTabs.forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
-    el.presetCards.forEach((card) => card.addEventListener('click', () => applyPreset(card.dataset.preset)));
+    el.signaturePresetCards.forEach((card) => {
+      card.addEventListener('click', () => applySignaturePreset(card.dataset.signaturePresetOption));
+    });
+    el.fullscreenPresetCards.forEach((card) => {
+      card.addEventListener('click', () => applyFullscreenPreset(card.dataset.fullscreenPresetOption));
+    });
+
+    el.fullscreenPresetControls.forEach((control) => {
+      const eventName = control.tagName === 'SELECT' || control.type === 'color' ? 'change' : 'input';
+      control.addEventListener(eventName, () => {
+        readFullscreenPresetControl(control);
+        if (control.type === 'range') {
+          const outputs = {
+            opacity: el.fullscreenPresetOpacityValue,
+            size: el.fullscreenPresetSizeValue,
+            rotate: el.fullscreenPresetRotateValue,
+            gap: el.fullscreenPresetGapValue,
+            stroke: el.fullscreenPresetStrokeValue
+          };
+          syncRange(control, outputs[control.dataset.fullscreenPreset], control.dataset.fullscreenPreset === 'rotate' ? '°' : (control.dataset.fullscreenPreset === 'gap' ? '' : '%'));
+        }
+        persistSettings();
+        schedulePreview();
+      });
+    });
 
     el.watermarkControls.forEach((control) => {
       const eventName = control.tagName === 'SELECT' || control.type === 'color' ? 'change' : 'input';
@@ -2075,8 +2211,6 @@
             size: el.watermarkSizeValue,
             opacity: el.watermarkOpacityValue,
             margin: el.watermarkMarginValue,
-            rotate: el.watermarkRotateValue,
-            gap: el.watermarkGapValue,
             stroke: el.watermarkStrokeValue,
             gradientStrength: el.gradientStrengthValue,
             gradientHeight: el.gradientHeightValue,
@@ -2199,7 +2333,6 @@
 
   function init() {
     cacheEls();
-    el.fullscreenPresetMount.appendChild(el.signaturePresetWorkspace);
     restoreSettings();
     applyUiFromState();
     bindControls();
