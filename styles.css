@@ -65,7 +65,7 @@ svg{display:block;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap
 .button:disabled{opacity:.35;box-shadow:none}
 
 .queue-view{margin-top:16px}
-.queue-scroll{display:flex;gap:9px;overflow-x:auto;padding:3px 0 12px;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.queue-scroll{display:flex;gap:9px;overflow-x:auto;padding:3px 3px 12px;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
 .queue-item{position:relative;flex:0 0 72px;height:72px;border-radius:8px;overflow:hidden;cursor:grab;border:1px solid var(--line);background:var(--surface-2);transition:opacity .2s,transform .2s,border-color .2s}
 .queue-item:hover{border-color:var(--ink-soft)}
 .queue-item.dragging{opacity:.4}
@@ -193,7 +193,7 @@ details summary span{font-size:8.5px;color:var(--ink-faint);font-weight:400;marg
 .module-quick-preset{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
 .module-quick-preset>span{font-size:10px;font-weight:600;color:var(--ink-soft)}
 .fullscreen-preset-mount:not(:empty){margin-bottom:12px}
-.preset-settings{margin-top:4px;padding:0 10px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(251,250,246,.72)}
+.preset-settings{margin:4px 0 16px;padding:0 10px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(251,250,246,.72)}
 .preset-settings>summary{padding:11px 0 9px;border-bottom:1px solid var(--line);margin-bottom:8px}
 .preset-settings-body{padding-top:2px}
 .module-body{padding:12px 0 12px}
@@ -273,8 +273,9 @@ details summary span{font-size:8.5px;color:var(--ink-faint);font-weight:400;marg
 .export-preview-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:11px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
 .export-preview-bar span{flex:1;font-size:9px;line-height:1.55;color:var(--ink-faint)}
 .export-preview-bar .button{flex:none}
-.stage-actions{display:flex;align-items:center;justify-content:space-between;gap:15px;padding-top:16px}
+.stage-actions{display:flex;align-items:center;justify-content:flex-end;gap:15px;padding-top:12px}
 .pager{display:flex;align-items:center;gap:7px}
+.pager.pager-top{justify-content:center;padding:11px 0 1px}
 .pager span{font-family:var(--mono);font-size:9px;color:var(--ink-faint);min-width:42px;text-align:center}
 .action-group{display:flex;gap:7px}
 .action-group .button{font-size:10.5px;min-height:35px}

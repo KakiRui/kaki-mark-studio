@@ -11,23 +11,23 @@
   const WATERMARK_DEFAULTS = Object.freeze({
     preset: 'none',
     text: 'KAKI STUDIO',
-    size: 3.2,
-    opacity: 82,
+    size: 3.5,
+    opacity: 100,
     position: 'br',
     margin: 4,
     rotate: -24,
     gap: 28,
     blend: 'normal',
-    font: 'sans',
+    font: 'mono',
     color: '#ffffff',
     strokeColor: '#111111',
-    stroke: 0,
+    stroke: 6,
     gradientColor: '#141412',
-    gradientStrength: 92,
-    gradientHeight: 48,
+    gradientStrength: 100,
+    gradientHeight: 50,
     bandBackground: '#141310',
-    bandOpacity: 70,
-    bandRightEnabled: false,
+    bandOpacity: 65,
+    bandRightEnabled: true,
     bandRightMode: 'date',
     bandCustomText: '',
     bandPrice: ''
@@ -46,10 +46,10 @@
     numberFont: 'sans',
     numberColor: '#ffffff',
     numberOpacity: 100,
-    numberOutlineEnabled: false,
+    numberOutlineEnabled: true,
     numberOutlineColor: '#111111',
     numberOutlineOpacity: 100,
-    numberOutlineWidth: 2,
+    numberOutlineWidth: 8,
     numberShadowEnabled: false,
     numberShadowColor: '#000000',
     numberShadowOpacity: 50,
@@ -68,13 +68,13 @@
     format: 'jpeg',
     edge: '2400',
     edgeLocked: true,
-    quality: 92,
+    quality: 70,
     prefix: 'kaki'
   });
 
   const PRESETS = Object.freeze({
-    gradient: { opacity: 94, size: 5.2, stroke: 2, gradientStrength: 92, gradientHeight: 48 },
-    band: { opacity: 92, size: 3.5, stroke: 0 }
+    gradient: { opacity: 100, size: 5, stroke: 2, gradientStrength: 100, gradientHeight: 50, font: 'sans' },
+    band: { opacity: 100, size: 3.5, stroke: 6, font: 'mono', bandOpacity: 65, bandRightEnabled: true, bandRightMode: 'date' }
   });
 
   const PRESET_ALIASES = { corner: 'none', center: 'gradient', double: 'none' };
@@ -82,12 +82,12 @@
   const FULLSCREEN_PRESET_DEFAULTS = Object.freeze({
     preset: 'tiled',
     text: 'KAKI STUDIO',
-    size: 3.8,
-    opacity: 18,
+    size: 4,
+    opacity: 80,
     rotate: -24,
-    gap: 30,
+    gap: 20,
     blend: 'normal',
-    font: 'sans',
+    font: 'mono',
     color: '#ffffff',
     strokeColor: '#111111',
     stroke: 0,
@@ -95,7 +95,7 @@
   });
 
   const FULLSCREEN_PRESETS = Object.freeze({
-    tiled: { opacity: 18, size: 3.8, stroke: 0, gap: 30, blend: 'normal' }
+    tiled: { opacity: 80, size: 4, stroke: 0, gap: 20, blend: 'normal', font: 'mono', placement: 'cell' }
   });
 
   const FRAME_DEFAULTS = Object.freeze({
@@ -111,8 +111,8 @@
     shadowColor: '#000000',
     shadowOpacity: 70,
     shadowBlur: 5,
-    shadowX: 1.5,
-    shadowY: 1.5,
+    shadowX: 1,
+    shadowY: 1,
   });
 
   const SMALL_DEFAULTS = Object.freeze({
@@ -124,12 +124,14 @@
     y: 4,
     placement: 'cell',
     rotate: 0,
+    tintEnabled: false,
+    tintColor: '#ffffff',
     shadowEnabled: true,
     shadowColor: '#000000',
-    shadowOpacity: 42,
-    shadowBlur: 14,
-    shadowX: 3,
-    shadowY: 5,
+    shadowOpacity: 70,
+    shadowBlur: 3,
+    shadowX: 2,
+    shadowY: 2,
   });
 
   const BLEND_MODES = Object.freeze({
@@ -249,7 +251,7 @@
       'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
       'frameName','frameRemoveBtn','frameTintCombo','frameShadowControls',
       'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
-      'smallThumb','smallName','smallRemoveBtn','smallShadowControls',
+      'smallThumb','smallName','smallRemoveBtn','smallTintCombo','smallShadowControls',
       'smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn',
       'imagePreviewOverlay','imagePreviewImg','imagePreviewTitle','imagePreviewMeta','imagePreviewCloseBtn'
     ];
@@ -261,6 +263,7 @@
     el.collageControls = Array.from(document.querySelectorAll('[data-collage]'));
     el.markControls = Array.from(document.querySelectorAll('[data-mark]'));
     el.fullscreenPresetControls = Array.from(document.querySelectorAll('[data-fullscreen-preset]'));
+    el.collageOnlyControls = Array.from(document.querySelectorAll('.collage-only-control'));
     el.collageMarkPlacements = Array.from(document.querySelectorAll('.collage-mark-placement'));
     el.exportControls = Array.from(document.querySelectorAll('[data-export]'));
   }
@@ -455,6 +458,9 @@
   }
 
   function updateCollageUi() {
+    el.collageOnlyControls.forEach((control) => {
+      control.hidden = state.mode !== 'collage';
+    });
     el.customRatioUI.hidden = state.collage.ratio !== 'custom';
     el.numberOptions.hidden = !state.collage.numberEnabled;
     el.soldOptions.hidden = !state.collage.soldEnabled;
@@ -847,6 +853,7 @@
     el.frameShadowControls.hidden = !state.marks.frame.shadowEnabled;
     el.smallShadowControls.hidden = !state.marks.small.shadowEnabled;
     el.frameTintCombo.classList.toggle('is-on', state.marks.frame.tintEnabled);
+    el.smallTintCombo.classList.toggle('is-on', state.marks.small.tintEnabled);
   }
 
   function makeOption(value, label) {
@@ -1183,6 +1190,22 @@
     return clamp(Math.round(state.collage.rows), 1, 8) * clamp(Math.round(state.collage.cols), 1, 8);
   }
 
+  function choosePageLayout(count, maxRows, maxCols) {
+    let best = null;
+    for (let cols = 1; cols <= Math.min(maxCols, count); cols++) {
+      const rows = Math.ceil(count / cols);
+      if (rows > maxRows) continue;
+      const emptyCells = rows * cols - count;
+      const score = emptyCells * 20 + Math.abs(cols - maxCols) + Math.abs(rows - maxRows) * 0.5;
+      if (!best || score < best.score) best = { cols, rows, score };
+    }
+    if (!best) {
+      const cols = Math.min(maxCols, count);
+      return { cols, rows: Math.ceil(count / cols) };
+    }
+    return best;
+  }
+
   function collagePages() {
     if (!state.files.length) return [];
     const capacity = perPage();
@@ -1217,11 +1240,17 @@
     }
 
     const pages = [];
+    const maxRows = clamp(Math.round(state.collage.rows), 1, 8);
+    const maxCols = clamp(Math.round(state.collage.cols), 1, 8);
     groups.forEach((group, groupIndex) => {
       for (let i = 0; i < group.items.length; i += capacity) {
+        const records = group.items.slice(i, i + capacity);
+        const layout = choosePageLayout(records.length, maxRows, maxCols);
         pages.push({
-          records: group.items.slice(i, i + capacity),
+          records,
           ratio: group.ratio,
+          layoutCols: layout.cols,
+          layoutRows: layout.rows,
           groupIndex,
           pageInGroup: i / capacity
         });
@@ -1578,7 +1607,7 @@
 
   function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind) {
     if (!img) return;
-    const renderImg = kind === 'frame' && settings.tintEnabled
+    const renderImg = (kind === 'frame' || kind === 'small') && settings.tintEnabled
       ? recoloredImage(img, settings.tintColor)
       : img;
     const sourceW = img.naturalWidth;
@@ -1760,8 +1789,8 @@
     const page = collagePages()[pageIndex];
     if (!page) return { width: 1, height: 1 };
     const visible = page.records;
-    const cols = clamp(Math.round(state.collage.cols), 1, 8);
-    const rows = clamp(Math.round(state.collage.rows), 1, 8);
+    const cols = page.layoutCols;
+    const rows = page.layoutRows;
     const base = collageBaseMetrics(cols, rows, page.ratio, maxEdge);
     const width = Math.max(1, Math.round(base.width * base.scale));
     const height = Math.max(1, Math.round(base.height * base.scale));

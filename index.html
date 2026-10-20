@@ -58,7 +58,7 @@
       <div class="queue-view" id="queueView" hidden>
         <div class="queue-scroll" id="queueStrip" aria-label="图片列表，可拖拽排序"></div>
         <div class="queue-footer">
-          <span>拖拽缩略图可调整顺序</span>
+          <span>拖拽缩略图可调整顺序 · 双击可放大查看导入图片</span>
           <button class="text-button danger" id="clearImagesBtn" type="button">清空全部</button>
         </div>
       </div>
@@ -88,7 +88,7 @@
         <div class="mode-panel" id="watermarkPanel" hidden>
           <div class="signature-preset-workspace" id="signaturePresetWorkspace">
           <div class="module-quick-preset">
-            <span>署名快捷预设</span>
+            <span>快捷预设</span>
             <div class="preset-grid">
               <button class="preset-card" type="button" data-signature-preset-option="gradient">
                 <span class="preset-swatch swatch-gradient">KAKI</span>
@@ -101,7 +101,7 @@
             </div>
           </div>
           <details class="preset-settings" id="presetSettingsDetails" open>
-            <summary>署名预设参数 <span>按当前署名预设调整</span></summary>
+            <summary>预设参数 <span>按当前预设调整</span></summary>
             <div class="preset-settings-body" id="presetSettingsBody">
 
           <div class="control-group compact-grid two-up" id="gradientOptions" hidden>
@@ -127,12 +127,12 @@
 
           <div class="control-group compact-grid two-up">
             <div>
-              <label for="watermarkOpacity">不透明度 <output id="watermarkOpacityValue">82%</output></label>
-              <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="82" data-watermark="opacity">
+              <label for="watermarkOpacity">不透明度 <output id="watermarkOpacityValue">100%</output></label>
+              <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="100" data-watermark="opacity">
             </div>
             <div>
-              <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.2%</output></label>
-              <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.2" data-watermark="size">
+              <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.5%</output></label>
+              <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.5" data-watermark="size">
             </div>
           </div>
 
@@ -160,15 +160,15 @@
                 <input id="bandBackground" type="color" value="#141310" data-watermark="bandBackground">
               </div>
               <div>
-                <label for="bandOpacity">底栏不透明度 <output id="bandOpacityValue">70%</output></label>
-                <input id="bandOpacity" type="range" min="0" max="100" step="1" value="70" data-watermark="bandOpacity">
+                <label for="bandOpacity">底栏不透明度 <output id="bandOpacityValue">65%</output></label>
+                <input id="bandOpacity" type="range" min="0" max="100" step="1" value="65" data-watermark="bandOpacity">
               </div>
             </div>
             <div class="tint-combo option-combo" id="bandRightCombo">
               <span class="option-preview" id="bandRightPreview">日期</span>
               <span class="tint-copy"><strong>右下内容</strong><small>日期 · 自定义 · 价格</small></span>
               <label class="tint-switch">
-                <input id="bandRightEnabled" type="checkbox" data-watermark="bandRightEnabled">
+                <input id="bandRightEnabled" type="checkbox" data-watermark="bandRightEnabled" checked>
                 <span></span>
               </label>
             </div>
@@ -203,7 +203,7 @@
                 <select id="watermarkFont" data-watermark="font">
                   <option value="sans">现代黑体</option>
                   <option value="serif">典雅宋体</option>
-                  <option value="mono">等宽字体</option>
+                  <option value="mono" selected>等宽字体</option>
                 </select>
               </div>
               <div class="two-up">
@@ -217,8 +217,8 @@
                 </div>
               </div>
               <div>
-                <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
-                <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
+                <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">6%</output></label>
+                <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="6" data-watermark="stroke">
               </div>
             </div>
           </details>
@@ -248,7 +248,7 @@
                 </div>
               </div>
               <details class="preset-settings" id="fullscreenPresetDetails" open>
-                <summary>平铺水印参数 <span>独立于署名预设</span></summary>
+                <summary>预设参数 <span>独立于全屏水印预设</span></summary>
                 <div class="preset-settings-body">
                   <div class="field-block">
                     <label for="fullscreenPresetText">水印文字</label>
@@ -256,12 +256,12 @@
                   </div>
                   <div class="control-group compact-grid two-up">
                     <div>
-                      <label for="fullscreenPresetOpacity">不透明度 <output id="fullscreenPresetOpacityValue">18%</output></label>
-                      <input id="fullscreenPresetOpacity" type="range" min="5" max="100" step="1" value="18" data-fullscreen-preset="opacity">
+                      <label for="fullscreenPresetOpacity">不透明度 <output id="fullscreenPresetOpacityValue">80%</output></label>
+                      <input id="fullscreenPresetOpacity" type="range" min="5" max="100" step="1" value="80" data-fullscreen-preset="opacity">
                     </div>
                     <div>
-                      <label for="fullscreenPresetSize">字号 <output id="fullscreenPresetSizeValue">3.8%</output></label>
-                      <input id="fullscreenPresetSize" type="range" min="1" max="18" step="0.1" value="3.8" data-fullscreen-preset="size">
+                      <label for="fullscreenPresetSize">字号 <output id="fullscreenPresetSizeValue">4%</output></label>
+                      <input id="fullscreenPresetSize" type="range" min="1" max="18" step="0.1" value="4" data-fullscreen-preset="size">
                     </div>
                   </div>
                   <div class="control-group compact-grid two-up">
@@ -270,22 +270,22 @@
                       <input id="fullscreenPresetRotate" type="range" min="-45" max="45" step="1" value="-24" data-fullscreen-preset="rotate">
                     </div>
                     <div>
-                      <label for="fullscreenPresetGap">重复间距 <output id="fullscreenPresetGapValue">30</output></label>
-                      <input id="fullscreenPresetGap" type="range" min="8" max="48" step="1" value="30" data-fullscreen-preset="gap">
+                      <label for="fullscreenPresetGap">重复间距 <output id="fullscreenPresetGapValue">20</output></label>
+                      <input id="fullscreenPresetGap" type="range" min="8" max="48" step="1" value="20" data-fullscreen-preset="gap">
                     </div>
                   </div>
                   <div class="two-up control-group">
                     <div>
-                      <label for="fullscreenPresetBlend">叠加效果</label>
+                      <label for="fullscreenPresetBlend">混合模式</label>
                       <select id="fullscreenPresetBlend" data-fullscreen-preset="blend">
                         <option value="normal">正常</option>
-                        <option value="overlay">叠加</option>
+                        <option value="overlay">叠加（推荐）</option>
                         <option value="soft-light">柔光</option>
                         <option value="screen">滤色</option>
                         <option value="multiply">正片叠底</option>
                       </select>
                     </div>
-                    <div>
+                    <div class="collage-only-control">
                       <label for="fullscreenPresetPlacement">拼图中的位置</label>
                       <select id="fullscreenPresetPlacement" data-fullscreen-preset="placement">
                         <option value="cell">每张小图 · 拼图前</option>
@@ -301,7 +301,7 @@
                         <select id="fullscreenPresetFont" data-fullscreen-preset="font">
                           <option value="sans">现代黑体</option>
                           <option value="serif">典雅宋体</option>
-                          <option value="mono">等宽字体</option>
+                          <option value="mono" selected>等宽字体</option>
                         </select>
                       </div>
                       <div class="two-up">
@@ -417,13 +417,13 @@
                         <input id="frameShadowBlur" type="range" min="0" max="120" step="1" value="5" data-mark="frame.shadowBlur">
                       </div>
                       <div>
-                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX" data-suffix="px">1.5px</output></label>
-                        <input id="frameShadowX" type="range" min="-40" max="40" step="0.5" value="1.5" data-mark="frame.shadowX">
+                        <label for="frameShadowX">水平距离 <output data-value-for="frame.shadowX" data-suffix="px">1px</output></label>
+                        <input id="frameShadowX" type="range" min="-40" max="40" step="0.5" value="1" data-mark="frame.shadowX">
                       </div>
                     </div>
                     <div>
-                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY" data-suffix="px">1.5px</output></label>
-                      <input id="frameShadowY" type="range" min="-40" max="40" step="0.5" value="1.5" data-mark="frame.shadowY">
+                      <label for="frameShadowY">垂直距离 <output data-value-for="frame.shadowY" data-suffix="px">1px</output></label>
+                      <input id="frameShadowY" type="range" min="-40" max="40" step="0.5" value="1" data-mark="frame.shadowY">
                     </div>
                   </div>
 
@@ -455,6 +455,14 @@
                     <option value="cell">每张小图 · 拼图前</option>
                     <option value="sheet">整张拼图 · 拼图后</option>
                   </select>
+                </div>
+                <div class="tint-combo" id="smallTintCombo">
+                  <input id="smallTintColor" type="color" value="#ffffff" data-mark="small.tintColor" aria-label="小水印统一改色颜色">
+                  <span class="tint-copy"><strong>统一改色</strong><small>保留小水印轮廓并替换颜色</small></span>
+                  <label class="tint-switch">
+                    <input id="smallTintEnabled" type="checkbox" data-mark="small.tintEnabled">
+                    <span></span>
+                  </label>
                 </div>
                 <div class="control-group compact-grid two-up">
                   <div>
@@ -522,23 +530,23 @@
                         <input id="smallShadowColor" type="color" value="#000000" data-mark="small.shadowColor">
                       </div>
                       <div>
-                        <label for="smallShadowOpacity">阴影不透明度 <output data-value-for="small.shadowOpacity" data-suffix="%">42%</output></label>
-                        <input id="smallShadowOpacity" type="range" min="0" max="100" step="1" value="42" data-mark="small.shadowOpacity">
+                        <label for="smallShadowOpacity">阴影不透明度 <output data-value-for="small.shadowOpacity" data-suffix="%">70%</output></label>
+                        <input id="smallShadowOpacity" type="range" min="0" max="100" step="1" value="70" data-mark="small.shadowOpacity">
                       </div>
                     </div>
                     <div class="two-up">
                       <div>
-                        <label for="smallShadowBlur">模糊 <output data-value-for="small.shadowBlur" data-suffix="px">14px</output></label>
-                        <input id="smallShadowBlur" type="range" min="0" max="60" step="0.5" value="14" data-mark="small.shadowBlur">
+                        <label for="smallShadowBlur">模糊 <output data-value-for="small.shadowBlur" data-suffix="px">3px</output></label>
+                        <input id="smallShadowBlur" type="range" min="0" max="60" step="0.5" value="3" data-mark="small.shadowBlur">
                       </div>
                       <div>
-                        <label for="smallShadowX">水平距离 <output data-value-for="small.shadowX" data-suffix="px">3px</output></label>
-                        <input id="smallShadowX" type="range" min="-20" max="20" step="0.5" value="3" data-mark="small.shadowX">
+                        <label for="smallShadowX">水平距离 <output data-value-for="small.shadowX" data-suffix="px">2px</output></label>
+                        <input id="smallShadowX" type="range" min="-20" max="20" step="0.5" value="2" data-mark="small.shadowX">
                       </div>
                     </div>
                     <div>
-                      <label for="smallShadowY">垂直距离 <output data-value-for="small.shadowY" data-suffix="px">5px</output></label>
-                      <input id="smallShadowY" type="range" min="-20" max="20" step="0.5" value="5" data-mark="small.shadowY">
+                      <label for="smallShadowY">垂直距离 <output data-value-for="small.shadowY" data-suffix="px">2px</output></label>
+                      <input id="smallShadowY" type="range" min="-20" max="20" step="0.5" value="2" data-mark="small.shadowY">
                     </div>
                   </div>
 
@@ -646,7 +654,7 @@
               </div>
               <div class="switch-row">
                 <div><strong>编号描边</strong><small>增强复杂画面中的可读性</small></div>
-                <label class="switch"><input id="numberOutlineEnabled" type="checkbox" data-collage="numberOutlineEnabled"><span></span></label>
+                <label class="switch"><input id="numberOutlineEnabled" type="checkbox" data-collage="numberOutlineEnabled" checked><span></span></label>
               </div>
               <div class="sold-options" id="numberOutlineOptions" hidden>
                 <div class="two-up">
@@ -660,8 +668,8 @@
                   </div>
                 </div>
                 <div>
-                  <label for="numberOutlineWidth">描边粗细 <output id="numberOutlineWidthValue">2px</output></label>
-                  <input id="numberOutlineWidth" type="range" min="0" max="12" step="0.5" value="2" data-collage="numberOutlineWidth">
+                  <label for="numberOutlineWidth">描边粗细 <output id="numberOutlineWidthValue">8px</output></label>
+                  <input id="numberOutlineWidth" type="range" min="0" max="12" step="0.5" value="8" data-collage="numberOutlineWidth">
                 </div>
               </div>
               <div class="switch-row">
@@ -741,6 +749,16 @@
           </div>
         </div>
 
+        <div class="pager pager-top" id="pager">
+          <button class="icon-button square" id="prevBtn" type="button" aria-label="上一张" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <span id="pagerLabel">0 / 0</span>
+          <button class="icon-button square" id="nextBtn" type="button" aria-label="下一张" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
         <details class="stage-export-settings" open>
           <summary><span>导出设置</span><small>统一输出参数</small></summary>
           <div class="stage-export-grid">
@@ -764,8 +782,8 @@
               </div>
             </div>
             <div id="exportQualityRow">
-              <label for="exportQuality">JPEG 画质 <output id="exportQualityValue">92%</output></label>
-              <input id="exportQuality" type="range" min="70" max="100" step="1" value="92" data-export="quality">
+              <label for="exportQuality">JPEG 画质 <output id="exportQualityValue">70%</output></label>
+              <input id="exportQuality" type="range" min="70" max="100" step="1" value="70" data-export="quality">
             </div>
             <div>
               <label for="filePrefix">文件名前缀</label>
@@ -779,15 +797,6 @@
         </details>
 
         <div class="stage-actions">
-          <div class="pager" id="pager">
-            <button class="icon-button square" id="prevBtn" type="button" aria-label="上一张" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            <span id="pagerLabel">0 / 0</span>
-            <button class="icon-button square" id="nextBtn" type="button" aria-label="下一张" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-          </div>
           <div class="action-group">
             <button class="button secondary" id="downloadCurrentBtn" type="button" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
