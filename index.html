@@ -91,11 +91,11 @@
             <div class="preset-grid">
               <button class="preset-card active" type="button" data-preset="tiled">
                 <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
-                <span><strong>平铺水印</strong><small>低调但难裁</small></span>
+                <span><strong>平铺水印</strong><small>全屏署名</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="gradient">
                 <span class="preset-swatch swatch-gradient">KAKI</span>
-                <span><strong>渐变预览</strong><small>渐变底栏 · 居中署名</small></span>
+                <span><strong>渐变预览</strong><small>居中署名</small></span>
               </button>
               <button class="preset-card" type="button" data-preset="band">
                 <span class="preset-swatch swatch-band">KAKI / 001</span>
@@ -213,19 +213,17 @@
         <div class="mark-workspace">
           <div class="mark-workspace-heading">
             <span>IMAGE MARKS</span>
-            <p>同时作用于单图与拼图 · 效果距离按画布比例换算</p>
           </div>
 
           <details class="mark-module" open>
             <summary>
-              <span><strong>全屏水印设置</strong><small>透明底纹 / 纹理叠加</small></span>
+              <span><strong>全屏水印设置</strong></span>
               <b id="fullscreenCount">0 层</b>
             </summary>
             <div class="module-body">
-              <div class="asset-action-row">
+              <div class="asset-import-row">
                 <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>
                 <button class="button secondary compact" id="addFullscreenBtn" type="button">导入全屏水印</button>
-                <span>支持 PNG / WEBP · 最多 8 层</span>
               </div>
               <div class="layer-list" id="fullscreenList"></div>
             </div>
@@ -233,13 +231,12 @@
 
           <details class="mark-module">
             <summary>
-              <span><strong>水印框设置</strong><small>边框 / 画框 / 装饰层</small></span>
+              <span><strong>水印框设置</strong></span>
               <b id="frameStatus">未导入</b>
             </summary>
             <div class="module-body">
               <input type="file" id="frameInput" accept="image/*" hidden>
-              <div class="asset-empty" id="frameEmpty">
-                <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
+              <div class="asset-import-row" id="frameEmpty">
                 <button class="button secondary compact" id="frameChooseBtn" type="button">导入水印框</button>
               </div>
               <div id="frameEditor" hidden>
@@ -265,27 +262,25 @@
                     <input id="frameOpacity" type="range" min="5" max="100" step="1" value="100" data-mark="frame.opacity">
                   </div>
                 </div>
-                <div class="control-group compact-grid two-up">
-                  <div>
-                    <label for="frameBlend">混合模式</label>
-                    <select id="frameBlend" data-mark="frame.blend">
-                      <option value="normal">正常</option>
-                      <option value="soft-light">柔光</option>
-                      <option value="screen">滤色</option>
-                      <option value="multiply">正片叠底</option>
-                      <option value="overlay">叠加</option>
-                      <option value="lighten">变亮</option>
-                      <option value="darken">变暗</option>
-                    </select>
-                  </div>
-                  <div class="color-field">
-                    <label for="frameTintColor">统一改色</label>
-                    <input id="frameTintColor" type="color" value="#ffffff" data-mark="frame.tintColor">
-                  </div>
+                <div class="control-group">
+                  <label for="frameBlend">混合模式</label>
+                  <select id="frameBlend" data-mark="frame.blend">
+                    <option value="normal">正常</option>
+                    <option value="soft-light">柔光</option>
+                    <option value="screen">滤色</option>
+                    <option value="multiply">正片叠底</option>
+                    <option value="overlay">叠加</option>
+                    <option value="lighten">变亮</option>
+                    <option value="darken">变暗</option>
+                  </select>
                 </div>
-                <div class="switch-row frame-tint-toggle">
-                  <div><strong>统一改色</strong><small>将水印框替换为所选颜色</small></div>
-                  <label class="switch"><input id="frameTintEnabled" type="checkbox" data-mark="frame.tintEnabled"><span></span></label>
+                <div class="tint-combo" id="frameTintCombo">
+                  <input id="frameTintColor" type="color" value="#ffffff" data-mark="frame.tintColor" aria-label="统一改色颜色">
+                  <span class="tint-copy"><strong>统一改色</strong><small>保留水印轮廓并替换颜色</small></span>
+                  <label class="tint-switch">
+                    <input id="frameTintEnabled" type="checkbox" data-mark="frame.tintEnabled">
+                    <span></span>
+                  </label>
                 </div>
                 <div class="control-group compact-grid two-up">
                   <div>
@@ -329,44 +324,6 @@
                     </div>
                   </div>
 
-                  <div class="effect-row">
-                    <label><input type="checkbox" id="frameGlowEnabled" data-mark="frame.glowEnabled"> 外发光</label>
-                    <span>沿透明边缘发光</span>
-                  </div>
-                  <div class="effect-controls" id="frameGlowControls" hidden>
-                    <div class="two-up">
-                      <div>
-                        <label for="frameGlowColor">发光颜色</label>
-                        <input id="frameGlowColor" type="color" value="#ffffff" data-mark="frame.glowColor">
-                      </div>
-                      <div>
-                        <label for="frameGlowOpacity">发光不透明度 <output data-value-for="frame.glowOpacity" data-suffix="%">48%</output></label>
-                        <input id="frameGlowOpacity" type="range" min="0" max="100" step="1" value="48" data-mark="frame.glowOpacity">
-                      </div>
-                    </div>
-                    <div>
-                      <label for="frameGlowBlur">发光范围 <output data-value-for="frame.glowBlur" data-suffix="px">60px</output></label>
-                      <input id="frameGlowBlur" type="range" min="0" max="300" step="1" value="60" data-mark="frame.glowBlur">
-                    </div>
-                  </div>
-
-                  <div class="effect-row">
-                    <label><input type="checkbox" id="frameStrokeEnabled" data-mark="frame.strokeEnabled"> 描边</label>
-                    <span>勾勒透明图形的外轮廓</span>
-                  </div>
-                  <div class="effect-controls" id="frameStrokeControls" hidden>
-                    <div class="two-up">
-                      <div>
-                        <label for="frameStrokeColor">描边颜色</label>
-                        <input id="frameStrokeColor" type="color" value="#ffffff" data-mark="frame.strokeColor">
-                      </div>
-                      <div>
-                        <label for="frameStrokeWidth">描边粗细 <output data-value-for="frame.strokeWidth" data-suffix="px">5px</output></label>
-                        <input id="frameStrokeWidth" type="range" min="0.2" max="24" step="0.1" value="5" data-mark="frame.strokeWidth">
-                      </div>
-                    </div>
-                  </div>
-
                 </div>
               </div>
             </div>
@@ -374,13 +331,12 @@
 
           <details class="mark-module">
             <summary>
-              <span><strong>小水印设置</strong><small>Logo / 签名 / 角标</small></span>
+              <span><strong>小水印设置</strong></span>
               <b id="smallStatus">未导入</b>
             </summary>
             <div class="module-body">
               <input type="file" id="smallInput" accept="image/*" hidden>
-              <div class="asset-empty" id="smallEmpty">
-                <div><strong>还没有小水印</strong><span>可以导入带透明通道的 Logo</span></div>
+              <div class="asset-import-row" id="smallEmpty">
                 <button class="button secondary compact" id="smallChooseBtn" type="button">导入小水印</button>
               </div>
               <div id="smallEditor" hidden>
@@ -479,44 +435,6 @@
                     <div>
                       <label for="smallShadowY">垂直距离 <output data-value-for="small.shadowY" data-suffix="px">5px</output></label>
                       <input id="smallShadowY" type="range" min="-20" max="20" step="0.5" value="5" data-mark="small.shadowY">
-                    </div>
-                  </div>
-
-                  <div class="effect-row">
-                    <label><input type="checkbox" id="smallGlowEnabled" data-mark="small.glowEnabled"> 外发光</label>
-                    <span>在 Logo 外缘扩散颜色</span>
-                  </div>
-                  <div class="effect-controls" id="smallGlowControls" hidden>
-                    <div class="two-up">
-                      <div>
-                        <label for="smallGlowColor">发光颜色</label>
-                        <input id="smallGlowColor" type="color" value="#ffffff" data-mark="small.glowColor">
-                      </div>
-                      <div>
-                        <label for="smallGlowOpacity">发光不透明度 <output data-value-for="small.glowOpacity" data-suffix="%">50%</output></label>
-                        <input id="smallGlowOpacity" type="range" min="0" max="100" step="1" value="50" data-mark="small.glowOpacity">
-                      </div>
-                    </div>
-                    <div>
-                      <label for="smallGlowBlur">发光范围 <output data-value-for="small.glowBlur" data-suffix="px">36px</output></label>
-                      <input id="smallGlowBlur" type="range" min="0" max="180" step="0.5" value="36" data-mark="small.glowBlur">
-                    </div>
-                  </div>
-
-                  <div class="effect-row">
-                    <label><input type="checkbox" id="smallStrokeEnabled" data-mark="small.strokeEnabled"> 描边</label>
-                    <span>增强透明图案轮廓</span>
-                  </div>
-                  <div class="effect-controls" id="smallStrokeControls" hidden>
-                    <div class="two-up">
-                      <div>
-                        <label for="smallStrokeColor">描边颜色</label>
-                        <input id="smallStrokeColor" type="color" value="#ffffff" data-mark="small.strokeColor">
-                      </div>
-                      <div>
-                        <label for="smallStrokeWidth">描边粗细 <output data-value-for="small.strokeWidth" data-suffix="px">4px</output></label>
-                        <input id="smallStrokeWidth" type="range" min="0.2" max="16" step="0.1" value="4" data-mark="small.strokeWidth">
-                      </div>
                     </div>
                   </div>
 

@@ -76,13 +76,6 @@
     shadowBlur: 40,
     shadowX: 8,
     shadowY: 12,
-    glowEnabled: false,
-    glowColor: '#ffffff',
-    glowOpacity: 48,
-    glowBlur: 60,
-    strokeEnabled: false,
-    strokeColor: '#ffffff',
-    strokeWidth: 5
   });
 
   const SMALL_DEFAULTS = Object.freeze({
@@ -100,13 +93,6 @@
     shadowBlur: 14,
     shadowX: 3,
     shadowY: 5,
-    glowEnabled: false,
-    glowColor: '#ffffff',
-    glowOpacity: 50,
-    glowBlur: 36,
-    strokeEnabled: false,
-    strokeColor: '#ffffff',
-    strokeWidth: 4
   });
 
   const BLEND_MODES = Object.freeze({
@@ -201,10 +187,10 @@
       'previewAllBtn','resultGallery','resultGrid',
       'numberOptions','fullscreenCount','fullscreenInput','addFullscreenBtn','fullscreenList',
       'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
-      'frameName','frameRemoveBtn','frameShadowControls','frameGlowControls','frameStrokeControls',
+      'frameName','frameRemoveBtn','frameTintCombo','frameShadowControls',
       'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
-      'smallThumb','smallName','smallRemoveBtn','smallShadowControls','smallGlowControls',
-      'smallStrokeControls','smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn'
+      'smallThumb','smallName','smallRemoveBtn','smallShadowControls',
+      'smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn'
     ];
     ids.forEach((id) => { el[id] = document.getElementById(id); });
     el.presetCards = Array.from(document.querySelectorAll('[data-preset]'));
@@ -411,13 +397,11 @@
 
     sanitizeMarkSettings(state.marks.frame, FRAME_DEFAULTS, {
       scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50],
-      shadowOpacity: [0, 100], shadowBlur: [0, 120], shadowX: [-40, 40], shadowY: [-40, 40],
-      glowOpacity: [0, 100], glowBlur: [0, 300], strokeWidth: [0.2, 24]
+      shadowOpacity: [0, 100], shadowBlur: [0, 120], shadowX: [-40, 40], shadowY: [-40, 40]
     });
     sanitizeMarkSettings(state.marks.small, SMALL_DEFAULTS, {
       scale: [3, 70], opacity: [5, 100], x: [-45, 45], y: [-45, 45], rotate: [-45, 45],
-      shadowOpacity: [0, 100], shadowBlur: [0, 60], shadowX: [-20, 20], shadowY: [-20, 20],
-      glowOpacity: [0, 100], glowBlur: [0, 180], strokeWidth: [0.2, 16]
+      shadowOpacity: [0, 100], shadowBlur: [0, 60], shadowX: [-20, 20], shadowY: [-20, 20]
     });
     if (!['tl','tc','tr','ml','mc','mr','bl','bc','br'].includes(state.marks.small.anchor)) {
       state.marks.small.anchor = SMALL_DEFAULTS.anchor;
@@ -438,11 +422,11 @@
       settings[key] = clamp(numberOr(settings[key], defaults[key]), min, max);
     });
     if (!BLEND_MODES[settings.blend]) settings.blend = defaults.blend;
-    ['shadowEnabled','glowEnabled','strokeEnabled','tintEnabled'].forEach((key) => {
+    ['shadowEnabled','tintEnabled'].forEach((key) => {
       if (!(key in defaults)) return;
       settings[key] = Boolean(settings[key]);
     });
-    ['shadowColor','glowColor','strokeColor','tintColor'].forEach((key) => {
+    ['shadowColor','tintColor'].forEach((key) => {
       if (!(key in defaults)) return;
       if (!/^#[0-9a-f]{6}$/i.test(settings[key])) settings[key] = defaults[key];
     });
@@ -588,7 +572,7 @@
         id: record.id,
         record,
         opacity: 100,
-        blend: 'normal',
+        blend: 'overlay',
         fit: 'cover',
         placement: 'after'
       });
@@ -658,11 +642,8 @@
 
   function updateEffectVisibility() {
     el.frameShadowControls.hidden = !state.marks.frame.shadowEnabled;
-    el.frameGlowControls.hidden = !state.marks.frame.glowEnabled;
-    el.frameStrokeControls.hidden = !state.marks.frame.strokeEnabled;
     el.smallShadowControls.hidden = !state.marks.small.shadowEnabled;
-    el.smallGlowControls.hidden = !state.marks.small.glowEnabled;
-    el.smallStrokeControls.hidden = !state.marks.small.strokeEnabled;
+    el.frameTintCombo.classList.toggle('is-on', state.marks.frame.tintEnabled);
   }
 
   function makeOption(value, label) {
@@ -674,13 +655,7 @@
 
   function renderFullscreenList() {
     el.fullscreenList.innerHTML = '';
-    if (!state.assets.fullscreen.length) {
-      const empty = document.createElement('div');
-      empty.className = 'layer-empty';
-      empty.textContent = '尚未导入全屏水印';
-      el.fullscreenList.appendChild(empty);
-      return;
-    }
+    if (!state.assets.fullscreen.length) return;
 
     state.assets.fullscreen.forEach((layer, index) => {
       const card = document.createElement('article');
@@ -1243,98 +1218,6 @@
     });
   }
 
-  function tintedMask(img, color, drawW, drawH, padding) {
-    const canvas = document.createElement('canvas');
-    const scale = Math.min(1, 2200 / Math.max(drawW + padding * 2, drawH + padding * 2));
-    canvas.width = Math.max(1, Math.ceil((drawW + padding * 2) * scale));
-    canvas.height = Math.max(1, Math.ceil((drawH + padding * 2) * scale));
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, padding * scale, padding * scale, drawW * scale, drawH * scale);
-    ctx.globalCompositeOperation = 'source-in';
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    return { canvas, scale, padding };
-  }
-
-  function drawMaskBlur(ctx, img, color, alpha, blurPx, dw, dh) {
-    if (alpha <= 0 || blurPx <= 0) return;
-    const padding = Math.ceil(blurPx * 2.2);
-    const mask = tintedMask(img, color, dw, dh, padding);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.filter = `blur(${Math.max(0.1, blurPx * mask.scale)}px)`;
-    const width = dw + padding * 2;
-    const height = dh + padding * 2;
-    ctx.drawImage(mask.canvas, -dw / 2 - padding, -dh / 2 - padding, width, height);
-    ctx.restore();
-  }
-
-  function edt1d(f, d, n) {
-    if (n <= 0) return;
-    const v = new Int32Array(n);
-    const z = new Float64Array(n + 1);
-    let first = -1;
-    for (let i = 0; i < n; i++) {
-      if (Number.isFinite(f[i])) {
-        first = i;
-        break;
-      }
-    }
-    if (first < 0) {
-      d.fill(Infinity, 0, n);
-      return;
-    }
-    let k = 0;
-    v[0] = first;
-    z[0] = -Infinity;
-    z[1] = Infinity;
-    for (let q = first + 1; q < n; q++) {
-      let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
-      while (s <= z[k]) {
-        k--;
-        s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
-      }
-      k++;
-      v[k] = q;
-      z[k] = s;
-      z[k + 1] = Infinity;
-    }
-    k = 0;
-    for (let q = 0; q < n; q++) {
-      while (z[k + 1] < q) k++;
-      const delta = q - v[k];
-      d[q] = delta * delta + f[v[k]];
-    }
-  }
-
-  function distanceTransformFromAlpha(alpha, width, height) {
-    const data = new Float64Array(width * height);
-    let hasMark = false;
-    for (let i = 0; i < data.length; i++) {
-      if (alpha[i] > 2) {
-        data[i] = 0;
-        hasMark = true;
-      } else {
-        data[i] = Infinity;
-      }
-    }
-    if (!hasMark) return null;
-    const length = Math.max(width, height);
-    const f = new Float64Array(length);
-    const d = new Float64Array(length);
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) f[y] = data[x + y * width];
-      edt1d(f, d, height);
-      for (let y = 0; y < height; y++) data[x + y * width] = d[y];
-    }
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) f[x] = data[x + y * width];
-      edt1d(f, d, width);
-      for (let x = 0; x < width; x++) data[x + y * width] = d[x];
-    }
-    return data;
-  }
-
   function deriveForegroundAlpha(image, width, height) {
     const pixels = image.data;
     const total = width * height;
@@ -1398,49 +1281,6 @@
     return canvas;
   }
 
-  function createSilhouette(img, drawW, drawH, padding, radiusPx, maxDimension = 1600) {
-    const scale = Math.min(1, maxDimension / Math.max(1, drawW + padding * 2, drawH + padding * 2));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.ceil((drawW + padding * 2) * scale));
-    canvas.height = Math.max(1, Math.ceil((drawH + padding * 2) * scale));
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(img, padding * scale, padding * scale, drawW * scale, drawH * scale);
-    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const alpha = deriveForegroundAlpha(image, canvas.width, canvas.height);
-    const distances = distanceTransformFromAlpha(alpha, canvas.width, canvas.height);
-    if (!distances) return { canvas, scale, padding };
-    const radius = Math.max(0, radiusPx * scale);
-    const feather = Math.max(1, 1.35 * scale);
-    const output = ctx.createImageData(canvas.width, canvas.height);
-    for (let i = 0; i < distances.length; i++) {
-      const coverage = clamp((radius + feather - Math.sqrt(distances[i])) / feather, 0, 1);
-      const p = i * 4;
-      output.data[p] = 255;
-      output.data[p + 1] = 255;
-      output.data[p + 2] = 255;
-      output.data[p + 3] = Math.round(coverage * 255);
-    }
-    ctx.putImageData(output, 0, 0);
-    return { canvas, scale, padding };
-  }
-
-  function drawMaskStroke(ctx, img, color, widthPx, dw, dh) {
-    if (widthPx <= 0) return;
-    const padding = Math.ceil(widthPx + 3);
-    const silhouette = createSilhouette(img, dw, dh, padding, widthPx);
-    const tinted = document.createElement('canvas');
-    tinted.width = silhouette.canvas.width;
-    tinted.height = silhouette.canvas.height;
-    const tintedCtx = tinted.getContext('2d');
-    tintedCtx.drawImage(silhouette.canvas, 0, 0);
-    tintedCtx.globalCompositeOperation = 'source-in';
-    tintedCtx.fillStyle = color;
-    tintedCtx.fillRect(0, 0, tinted.width, tinted.height);
-    ctx.save();
-    ctx.drawImage(tinted, -dw / 2 - padding, -dh / 2 - padding, dw + padding * 2, dh + padding * 2);
-    ctx.restore();
-  }
-
   function drawCompositeAsset(ctx, img, boxW, boxH, settings, kind) {
     if (!img) return;
     const renderImg = kind === 'frame' && settings.tintEnabled
@@ -1474,24 +1314,6 @@
     ctx.save();
     ctx.translate(cx, cy);
     if (kind === 'small') ctx.rotate((settings.rotate || 0) * Math.PI / 180);
-
-    if (settings.glowEnabled) {
-      drawMaskBlur(
-        ctx,
-        renderImg,
-        settings.glowColor,
-        settings.glowOpacity / 100,
-        settings.glowBlur * effectScale,
-        dw,
-        dh
-      );
-    }
-    if (settings.strokeEnabled) {
-      ctx.save();
-      ctx.globalAlpha = 0.92;
-      drawMaskStroke(ctx, renderImg, settings.strokeColor, settings.strokeWidth * effectScale, dw, dh);
-      ctx.restore();
-    }
 
     ctx.save();
     ctx.globalAlpha = clamp(settings.opacity, 0, 100) / 100;
@@ -1533,8 +1355,13 @@
     ctx.fillRect(0, 0, width, height);
     drawContain(ctx, img, 0, 0, width, height);
     drawFullscreenLayers(ctx, 0, 0, width, height);
-    drawWatermark(ctx, width, height, index);
-    drawImportedMarks(ctx, width, height);
+    if (state.watermark.preset === 'gradient' || state.watermark.preset === 'band') {
+      drawImportedMarks(ctx, width, height);
+      drawWatermark(ctx, width, height, index);
+    } else {
+      drawWatermark(ctx, width, height, index);
+      drawImportedMarks(ctx, width, height);
+    }
     return { width, height };
   }
 

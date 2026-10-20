@@ -9,10 +9,10 @@ A local-first batch image marking workspace for artists, photographers and small
   - **Contact-sheet collage** — configurable rows and columns, adjustable numbering, occlusion masks, and optional signatures inside each cell.
 - **Three compositing modules shared by both workspaces**
   - **Full-screen watermark** — import up to eight transparent textures, with per-layer opacity, blend mode, fit mode, and before/after-collage placement.
-  - **Watermark frame** — import a frame, replace its ink color while preserving the detected foreground, and choose whether it is applied to each cell or the finished sheet.
-  - **Small watermark** — import a logo or signature with nine-point placement, offsets, scale, rotation, and cell-or-sheet compositing.
+  - **Watermark frame** — import a frame, replace its ink color while preserving the detected foreground, add a shadow, and choose whether it is applied to each cell or the finished sheet.
+  - **Small watermark** — import a logo or signature with nine-point placement, offsets, scale, rotation, shadow, and cell-or-sheet compositing.
 - **Live preview** — edits are reflected immediately, with no server round-trip.
-- **Fine-grained effects** — glow, outline, and shadow distances use 0.1–1 px controls, then scale proportionally with the rendered canvas.
+- **Fine-grained controls** — shadow distances and text outline strength use fine steps and scale proportionally with the rendered canvas.
 - **Batch export** — write JPEG or PNG at a locked 2400 px long edge by default, unlock other sizes when needed, download one image, package the set as a ZIP, or load every finished image into an iOS-friendly long-press gallery.
 - **First-run guide** — an animated three-step introduction appears on the first visit and can be reopened from the header.
 - **Local and private** — files stay in the browser tab. There is no upload endpoint, account, tracking pixel, or analytics script.
