@@ -220,7 +220,8 @@
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
       'previewAllBtn','resultGallery','resultGrid',
       'numberOptions','fullscreenCount','fullscreenEmpty','fullscreenEmptyTitle','fullscreenEmptyHint',
-      'fullscreenInput','addFullscreenBtn','fullscreenList',
+      'fullscreenInput','addFullscreenBtn','fullscreenList','fullscreenPresetMount',
+      'signaturePresetWorkspace','presetSettingsDetails',
       'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
       'frameName','frameRemoveBtn','frameTintCombo','frameShadowControls',
       'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
@@ -357,7 +358,7 @@
     });
     el.watermarkTab.setAttribute('aria-controls', 'watermarkPanel');
     el.collageTab.setAttribute('aria-controls', 'collagePanel');
-    el.watermarkPanel.hidden = false;
+    el.watermarkPanel.hidden = true;
     el.collagePanel.hidden = state.mode !== 'collage';
 
     el.numberOptions.hidden = !state.collage.numberEnabled;
@@ -368,6 +369,7 @@
     el.gradientOptions.hidden = state.watermark.preset !== 'gradient';
     el.gradientHeightOptions.hidden = state.watermark.preset !== 'gradient';
     el.bandOptions.hidden = state.watermark.preset !== 'band';
+    el.presetSettingsDetails.hidden = state.watermark.preset === 'none';
 
     el.markControls.forEach((control) => {
       const value = getPath(state.marks, control.dataset.mark);
@@ -566,6 +568,7 @@
     state.watermark.preset = name;
     Object.assign(state.watermark, PRESETS[name]);
     applyUiFromState();
+    el.presetSettingsDetails.open = true;
     persistSettings();
     schedulePreview();
   }
@@ -1590,7 +1593,7 @@
     ctx.save();
     ctx.fillStyle = 'rgba(23,22,19,.73)';
     ctx.fillRect(x, y, w, h);
-    const size = Math.min(w, h) * 0.14;
+    const size = Math.min(w, h) * 0.19;
     ctx.font = `600 ${size}px ${FONT_STACKS.mono}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1664,8 +1667,8 @@
     const page = collagePages()[pageIndex];
     if (!page) return { width: 1, height: 1 };
     const visible = page.records;
-    const cols = clamp(Math.min(Math.round(state.collage.cols), visible.length), 1, 8);
-    const rows = clamp(Math.ceil(visible.length / cols), 1, 8);
+    const cols = clamp(Math.round(state.collage.cols), 1, 8);
+    const rows = clamp(Math.round(state.collage.rows), 1, 8);
     const base = collageBaseMetrics(cols, rows, page.ratio, maxEdge);
     const width = Math.max(1, Math.round(base.width * base.scale));
     const height = Math.max(1, Math.round(base.height * base.scale));
@@ -1700,6 +1703,14 @@
         ctx.translate(x, y);
         drawCompositeAsset(ctx, state.assets.small?.image, base.cellW, base.cellH, state.marks.small, 'small');
         ctx.restore();
+      }
+      if (state.watermark.preset !== 'none') {
+        drawWatermark(ctx, base.cellW, base.cellH, item.fileIndex, {
+          preset: state.watermark.preset,
+          dims: { x, y, w: base.cellW, h: base.cellH },
+          clip: true,
+          radius: base.cellW * 0.012
+        });
       }
       const number = state.collage.numberStart + item.fileIndex;
       const sold = isSold(number);
@@ -2188,6 +2199,7 @@
 
   function init() {
     cacheEls();
+    el.fullscreenPresetMount.appendChild(el.signaturePresetWorkspace);
     restoreSettings();
     applyUiFromState();
     bindControls();

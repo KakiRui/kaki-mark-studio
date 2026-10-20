@@ -85,20 +85,11 @@
           </button>
         </div>
 
-        <div class="mode-panel" id="watermarkPanel">
-          <fieldset class="control-group">
-            <legend>快捷预设</legend>
-            <div class="preset-grid">
-              <button class="preset-card" type="button" data-preset="gradient">
-                <span class="preset-swatch swatch-gradient">KAKI</span>
-                <span><strong>渐变预览</strong><small>居中署名</small></span>
-              </button>
-              <button class="preset-card" type="button" data-preset="band">
-                <span class="preset-swatch swatch-band">KAKI / 001</span>
-                <span><strong>底栏信息</strong><small>清晰署名</small></span>
-              </button>
-            </div>
-          </fieldset>
+        <div class="mode-panel" id="watermarkPanel" hidden>
+          <div class="signature-preset-workspace" id="signaturePresetWorkspace">
+          <details class="preset-settings" id="presetSettingsDetails" open>
+            <summary>预设参数 <span>按当前预设调整</span></summary>
+            <div class="preset-settings-body" id="presetSettingsBody">
 
           <div class="control-group compact-grid two-up" id="gradientOptions" hidden>
             <div class="color-field">
@@ -239,6 +230,9 @@
               </div>
             </div>
           </details>
+            </div>
+          </details>
+          </div>
         </div>
 
         <div class="mark-workspace">
@@ -254,11 +248,22 @@
             <div class="module-body">
               <div class="module-quick-preset">
                 <span>快捷预设</span>
-                <button class="preset-card" type="button" data-preset="tiled">
-                  <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
-                  <span><strong>平铺水印</strong><small>全屏署名</small></span>
-                </button>
+                <div class="preset-grid">
+                  <button class="preset-card" type="button" data-preset="tiled">
+                    <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
+                    <span><strong>平铺水印</strong><small>全屏署名</small></span>
+                  </button>
+                  <button class="preset-card" type="button" data-preset="gradient">
+                    <span class="preset-swatch swatch-gradient">KAKI</span>
+                    <span><strong>渐变预览</strong><small>居中署名</small></span>
+                  </button>
+                  <button class="preset-card" type="button" data-preset="band">
+                    <span class="preset-swatch swatch-band">KAKI / 001</span>
+                    <span><strong>底栏信息</strong><small>清晰署名</small></span>
+                  </button>
+                </div>
               </div>
+              <div class="fullscreen-preset-mount" id="fullscreenPresetMount"></div>
               <div class="asset-empty" id="fullscreenEmpty">
                 <div><strong id="fullscreenEmptyTitle">还没有全屏水印</strong><span id="fullscreenEmptyHint">支持 PNG / WEBP · 最多 8 层</span></div>
                 <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>

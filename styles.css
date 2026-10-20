@@ -190,12 +190,16 @@ details summary span{font-size:8.5px;color:var(--ink-faint);font-weight:400;marg
 .mark-module>summary strong{font-weight:700}
 .mark-module>summary small{font-size:8.5px;font-weight:400;color:var(--ink-faint)}
 .mark-module>summary>b{font-family:var(--mono);font-size:8px;font-weight:500;color:var(--ink-faint);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:4px 6px;margin-left:auto}
+.module-quick-preset{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.module-quick-preset>span{font-size:10px;font-weight:600;color:var(--ink-soft)}
+.fullscreen-preset-mount:not(:empty){margin-bottom:12px}
+.preset-settings{margin-top:4px;padding:0 10px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(251,250,246,.72)}
+.preset-settings>summary{padding:11px 0 9px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.preset-settings-body{padding-top:2px}
 .module-body{padding:12px 0 12px}
 .module-lead{margin:0 0 11px;font-size:9px;line-height:1.65;color:var(--ink-faint)}
 .module-note{margin:9px 0 0;font-size:8px;line-height:1.55;color:var(--ink-faint)}
-.module-quick-preset{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
-.module-quick-preset>span{font-size:10px;font-weight:600;color:var(--ink-soft)}
-.module-quick-preset .preset-card{width:100%;flex:none}
+.module-quick-preset .preset-grid{width:100%}
 .layer-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .layer-empty{padding:12px 10px;border:1px dashed var(--line);border-radius:8px;text-align:center;font-size:8.5px;color:var(--ink-faint)}
 .layer-card{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
@@ -361,7 +365,7 @@ details summary span{font-size:8.5px;color:var(--ink-faint);font-weight:400;marg
   .stage-actions{align-items:stretch;flex-direction:column-reverse;gap:11px}
   .stage-export-grid{grid-template-columns:1fr 1fr}
   .stage-export-grid>div:last-child{grid-column:1/-1}
-  .result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .result-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
   .action-group{display:grid;grid-template-columns:1fr 1fr}
   .action-group .button{min-height:40px;padding-left:7px;padding-right:7px;font-size:9.5px}
   .pager{justify-content:space-between}
