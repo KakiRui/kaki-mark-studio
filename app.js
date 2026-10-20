@@ -4,7 +4,7 @@
   const MAX_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
-  const STORAGE_KEY = 'kaki-mark-studio-settings-v5';
+  const STORAGE_KEY = 'kaki-mark-studio-settings-v6';
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const PREVIEW_EDGE = 1500;
 
@@ -37,15 +37,31 @@
     ratio: 'auto',
     rows: 3,
     cols: 3,
-    gap: 4,
+    gap: 1.5,
     background: '#fbfaf7',
     numberEnabled: true,
     numberStart: 1,
-    numberSize: 13,
+    numberSize: 60,
     numberPosition: 'br',
+    numberFont: 'sans',
+    numberColor: '#ffffff',
+    numberOpacity: 100,
+    numberOutlineEnabled: false,
+    numberOutlineColor: '#111111',
+    numberOutlineOpacity: 100,
+    numberOutlineWidth: 2,
+    numberShadowEnabled: false,
+    numberShadowColor: '#000000',
+    numberShadowOpacity: 50,
+    numberShadowBlur: 8,
+    numberShadowX: 2,
+    numberShadowY: 2,
+    numberShowOnSold: true,
     soldEnabled: false,
     soldNumbers: '',
-    remainingMode: false
+    remainingMode: false,
+    customWidth: 4,
+    customHeight: 5
   });
 
   const EXPORT_DEFAULTS = Object.freeze({
@@ -58,7 +74,7 @@
 
   const PRESETS = Object.freeze({
     tiled: { opacity: 18, size: 3.8, stroke: 0, gap: 30 },
-    gradient: { opacity: 94, size: 5.2, stroke: 0, gradientStrength: 92, gradientHeight: 48 },
+    gradient: { opacity: 94, size: 5.2, stroke: 2, gradientStrength: 92, gradientHeight: 48 },
     band: { opacity: 92, size: 3.5, stroke: 0 }
   });
 
@@ -188,8 +204,15 @@
       'bandCustomField','bandCustomText','bandPriceField','bandPrice',
       'gradientColor','gradientStrength','gradientStrengthValue','gradientHeight',
       'gradientHeightValue','gradientOptions','gradientHeightOptions',
-      'collageRatio','collageRows','collageCols','collageGap','collageGapValue','collageBg',
-      'numberEnabled','numberStart','numberSize','numberSizeValue','numberPosition','soldEnabled','soldOptions','soldNumbers',
+      'collageRatio','customRatioUI','customRatioWidth','customRatioHeight',
+      'collageRows','collageCols','collageGap','collageGapValue','collageBg',
+      'numberEnabled','numberStyleSettings','numberStart','numberSize','numberSizeValue','numberPosition','soldEnabled','soldOptions','soldNumbers',
+      'numberFont','numberColor','numberOpacity','numberOpacityValue','numberOutlineEnabled',
+      'numberOutlineOptions','numberOutlineColor','numberOutlineOpacity','numberOutlineOpacityValue',
+      'numberOutlineWidth','numberOutlineWidthValue','numberShadowEnabled','numberShadowOptions',
+      'numberShadowColor','numberShadowOpacity','numberShadowOpacityValue','numberShadowBlur',
+      'numberShadowBlurValue','numberShadowX','numberShadowXValue','numberShadowY',
+      'numberShadowYValue','numberShowOnSold',
       'remainingMode','exportFormat','exportEdge','exportEdgeState',
       'exportEdgeLockBtn','exportQuality','exportQualityValue','exportQualityRow','filePrefix',
       'stageTitle','previewMeta','previewSurface','previewCanvas','emptyState',
@@ -248,8 +271,15 @@
     syncRange(el.bandOpacity, el.bandOpacityValue);
     syncRange(el.gradientStrength, el.gradientStrengthValue);
     syncRange(el.gradientHeight, el.gradientHeightValue);
-    syncRange(el.collageGap, el.collageGapValue);
+    syncRange(el.collageGap, el.collageGapValue, 'px');
     syncRange(el.numberSize, el.numberSizeValue, 'px');
+    syncRange(el.numberOpacity, el.numberOpacityValue);
+    syncRange(el.numberOutlineOpacity, el.numberOutlineOpacityValue);
+    syncRange(el.numberOutlineWidth, el.numberOutlineWidthValue, 'px');
+    syncRange(el.numberShadowOpacity, el.numberShadowOpacityValue);
+    syncRange(el.numberShadowBlur, el.numberShadowBlurValue, 'px');
+    syncRange(el.numberShadowX, el.numberShadowXValue, 'px');
+    syncRange(el.numberShadowY, el.numberShadowYValue, 'px');
     syncRange(el.exportQuality, el.exportQualityValue);
     document.querySelectorAll('[data-value-for]').forEach((output) => {
       const key = output.dataset.valueFor;
@@ -284,6 +314,8 @@
     updateBandUi();
 
     el.collageRatio.value = state.collage.ratio;
+    el.customRatioWidth.value = state.collage.customWidth;
+    el.customRatioHeight.value = state.collage.customHeight;
     el.collageRows.value = state.collage.rows;
     el.collageCols.value = state.collage.cols;
     el.collageGap.value = state.collage.gap;
@@ -292,9 +324,24 @@
     el.numberStart.value = state.collage.numberStart;
     el.numberSize.value = state.collage.numberSize;
     el.numberPosition.value = state.collage.numberPosition;
+    el.numberFont.value = state.collage.numberFont;
+    el.numberColor.value = state.collage.numberColor;
+    el.numberOpacity.value = state.collage.numberOpacity;
+    el.numberOutlineEnabled.checked = state.collage.numberOutlineEnabled;
+    el.numberOutlineColor.value = state.collage.numberOutlineColor;
+    el.numberOutlineOpacity.value = state.collage.numberOutlineOpacity;
+    el.numberOutlineWidth.value = state.collage.numberOutlineWidth;
+    el.numberShadowEnabled.checked = state.collage.numberShadowEnabled;
+    el.numberShadowColor.value = state.collage.numberShadowColor;
+    el.numberShadowOpacity.value = state.collage.numberShadowOpacity;
+    el.numberShadowBlur.value = state.collage.numberShadowBlur;
+    el.numberShadowX.value = state.collage.numberShadowX;
+    el.numberShadowY.value = state.collage.numberShadowY;
+    el.numberShowOnSold.checked = state.collage.numberShowOnSold;
     el.soldEnabled.checked = state.collage.soldEnabled;
     el.soldNumbers.value = state.collage.soldNumbers;
     el.remainingMode.checked = state.collage.remainingMode;
+    updateCollageUi();
 
     el.exportFormat.value = state.export.format;
     el.exportEdge.value = state.export.edge;
@@ -314,6 +361,7 @@
     el.collagePanel.hidden = state.mode !== 'collage';
 
     el.numberOptions.hidden = !state.collage.numberEnabled;
+    el.numberStyleSettings.hidden = !state.collage.numberEnabled;
     el.soldOptions.hidden = !state.collage.soldEnabled;
     el.cornerOptions.hidden = true;
     el.tiledOptions.hidden = state.watermark.preset !== 'tiled';
@@ -357,6 +405,14 @@
     el.bandCustomField.hidden = mode !== 'custom';
     el.bandPriceField.hidden = mode !== 'price';
     el.bandRightPreview.textContent = mode === 'date' ? '日期' : mode === 'price' ? 'RMB' : '文字';
+  }
+
+  function updateCollageUi() {
+    el.customRatioUI.hidden = state.collage.ratio !== 'custom';
+    el.numberOptions.hidden = !state.collage.numberEnabled;
+    el.soldOptions.hidden = !state.collage.soldEnabled;
+    el.numberOutlineOptions.hidden = !state.collage.numberOutlineEnabled;
+    el.numberShadowOptions.hidden = !state.collage.numberShadowEnabled;
   }
 
   function persistSettings() {
@@ -418,11 +474,31 @@
     const cl = state.collage;
     cl.rows = clamp(Math.round(numberOr(cl.rows, COLLAGE_DEFAULTS.rows)), 1, 8);
     cl.cols = clamp(Math.round(numberOr(cl.cols, COLLAGE_DEFAULTS.cols)), 1, 8);
-    cl.gap = clamp(numberOr(cl.gap, COLLAGE_DEFAULTS.gap), 0, 12);
+    cl.gap = clamp(numberOr(cl.gap, COLLAGE_DEFAULTS.gap), 0, 80);
+    cl.customWidth = clamp(Math.round(numberOr(cl.customWidth, COLLAGE_DEFAULTS.customWidth)), 1, 100);
+    cl.customHeight = clamp(Math.round(numberOr(cl.customHeight, COLLAGE_DEFAULTS.customHeight)), 1, 100);
     cl.numberStart = clamp(Math.round(numberOr(cl.numberStart, 1)), 0, 99999);
-    cl.numberSize = clamp(numberOr(cl.numberSize, COLLAGE_DEFAULTS.numberSize), 8, 160);
-    if (!['auto','1','0.75','0.8','0.5625'].includes(cl.ratio)) cl.ratio = 'auto';
-    if (!['br','bl','tr','tl','bc'].includes(cl.numberPosition)) cl.numberPosition = 'br';
+    cl.numberSize = clamp(numberOr(cl.numberSize, COLLAGE_DEFAULTS.numberSize), 12, 180);
+    if (cl.ratio === '1') cl.ratio = '1:1';
+    if (cl.ratio === '0.75') cl.ratio = '3:4';
+    if (cl.ratio === '0.8') cl.ratio = '4:5';
+    if (cl.ratio === '0.5625') cl.ratio = '9:16';
+    if (!['auto','1:1','3:4','4:3','9:16','16:9','custom'].includes(cl.ratio)) cl.ratio = 'auto';
+    if (!['br','bl','tr','tl','bc','center'].includes(cl.numberPosition)) cl.numberPosition = 'br';
+    if (!FONT_STACKS[cl.numberFont]) cl.numberFont = COLLAGE_DEFAULTS.numberFont;
+    ['numberColor','numberOutlineColor','numberShadowColor'].forEach((key) => {
+      if (!/^#[0-9a-f]{6}$/i.test(cl[key])) cl[key] = COLLAGE_DEFAULTS[key];
+    });
+    cl.numberOpacity = clamp(numberOr(cl.numberOpacity, 100), 5, 100);
+    cl.numberOutlineOpacity = clamp(numberOr(cl.numberOutlineOpacity, 100), 0, 100);
+    cl.numberOutlineWidth = clamp(numberOr(cl.numberOutlineWidth, 2), 0, 12);
+    cl.numberShadowOpacity = clamp(numberOr(cl.numberShadowOpacity, 50), 0, 100);
+    cl.numberShadowBlur = clamp(numberOr(cl.numberShadowBlur, 8), 0, 40);
+    cl.numberShadowX = clamp(numberOr(cl.numberShadowX, 2), -20, 20);
+    cl.numberShadowY = clamp(numberOr(cl.numberShadowY, 2), -20, 20);
+    cl.numberOutlineEnabled = Boolean(cl.numberOutlineEnabled);
+    cl.numberShadowEnabled = Boolean(cl.numberShadowEnabled);
+    cl.numberShowOnSold = cl.numberShowOnSold !== false;
     if (!/^#[0-9a-f]{6}$/i.test(cl.background)) cl.background = COLLAGE_DEFAULTS.background;
     cl.soldNumbers = String(cl.soldNumbers ?? '').slice(0, 200);
 
@@ -904,7 +980,7 @@
     el.libraryMeta.textContent = `${state.files.length} 张 · 合计 ${formatBytes(state.files.reduce((sum, f) => sum + f.file.size, 0))}`;
 
     const activeImageIndex = state.mode === 'collage'
-      ? clamp(state.activePage * perPage(), 0, state.files.length - 1)
+      ? (collagePages()[state.activePage]?.records[0]?.fileIndex ?? 0)
       : clamp(state.activePage, 0, state.files.length - 1);
 
     state.files.forEach((file, index) => {
@@ -937,8 +1013,8 @@
       item.append(img, badge, remove);
       item.addEventListener('click', () => {
         selectImage(index);
-        openImagePreview(file, index);
       });
+      item.addEventListener('dblclick', () => openImagePreview(file, index));
       item.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -954,7 +1030,12 @@
 
   function selectImage(index) {
     if (!state.files[index]) return;
-    state.activePage = state.mode === 'collage' ? Math.floor(index / perPage()) : index;
+    if (state.mode === 'collage') {
+      const page = collagePages().findIndex((item) => item.records.some((record) => record.fileIndex === index));
+      state.activePage = Math.max(0, page);
+    } else {
+      state.activePage = index;
+    }
     renderQueue();
     updatePager();
     schedulePreview();
@@ -1018,9 +1099,59 @@
     return clamp(Math.round(state.collage.rows), 1, 8) * clamp(Math.round(state.collage.cols), 1, 8);
   }
 
+  function collagePages() {
+    if (!state.files.length) return [];
+    const capacity = perPage();
+    const indexed = state.files.map((record, fileIndex) => ({ record, fileIndex }));
+    const groups = [];
+
+    if (state.collage.ratio === 'auto') {
+      indexed.forEach((item) => {
+        const ratio = clamp(item.record.width / item.record.height, 0.2, 5);
+        let group = groups.find((candidate) => Math.abs(candidate.ratio - ratio) / candidate.ratio <= 0.075);
+        if (!group) {
+          group = { ratio, ratioSum: 0, ratioCount: 0, firstIndex: item.fileIndex, items: [] };
+          groups.push(group);
+        }
+        group.items.push(item);
+        group.ratioSum += ratio;
+        group.ratioCount++;
+        group.ratio = clamp(group.ratioSum / group.ratioCount, 0.2, 5);
+      });
+      groups.sort((a, b) => a.firstIndex - b.firstIndex);
+    } else {
+      groups.push({
+        ratio: selectedCollageRatio(),
+        firstIndex: 0,
+        items: indexed
+      });
+    }
+
+    const pages = [];
+    groups.forEach((group, groupIndex) => {
+      for (let i = 0; i < group.items.length; i += capacity) {
+        pages.push({
+          records: group.items.slice(i, i + capacity),
+          ratio: group.ratio,
+          groupIndex,
+          pageInGroup: i / capacity
+        });
+      }
+    });
+    return pages;
+  }
+
+  function selectedCollageRatio() {
+    if (state.collage.ratio === 'custom') {
+      return clamp(state.collage.customWidth / Math.max(1, state.collage.customHeight), 0.2, 5);
+    }
+    const ratios = { '1:1': 1, '3:4': 3 / 4, '4:3': 4 / 3, '9:16': 9 / 16, '16:9': 16 / 9 };
+    return ratios[state.collage.ratio] || 0.8;
+  }
+
   function pageCount() {
     if (!state.files.length) return 0;
-    return state.mode === 'collage' ? Math.ceil(state.files.length / perPage()) : state.files.length;
+    return state.mode === 'collage' ? collagePages().length : state.files.length;
   }
 
   function updatePager() {
@@ -1429,15 +1560,6 @@
     return { width, height };
   }
 
-  function collageRatioValue() {
-    if (state.collage.ratio === 'auto') {
-      const first = state.files[0];
-      if (!first) return 0.8;
-      return clamp(first.width / first.height, 0.35, 2.4);
-    }
-    return numberOr(state.collage.ratio, 0.8);
-  }
-
   function parseSoldNumbers(raw) {
     const sold = new Set();
     const normalized = String(raw || '').replace(/，|、|。|;/g, ',').replace(/[—–~～]/g, '-');
@@ -1468,12 +1590,18 @@
     ctx.save();
     ctx.fillStyle = 'rgba(23,22,19,.73)';
     ctx.fillRect(x, y, w, h);
-    const size = Math.min(w, h) * 0.085;
+    const size = Math.min(w, h) * 0.14;
     ctx.font = `600 ${size}px ${FONT_STACKS.mono}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = size * 0.12;
+    ctx.strokeStyle = 'rgba(0,0,0,.78)';
     ctx.fillStyle = 'rgba(250,248,240,.92)';
-    ctx.fillText('SOLD OUT', x + w / 2, y + h / 2);
+    ctx.strokeText('SOLD', x + w / 2, y + h / 2 - size * 0.62);
+    ctx.fillText('SOLD', x + w / 2, y + h / 2 - size * 0.62);
+    ctx.strokeText('OUT', x + w / 2, y + h / 2 + size * 0.62);
+    ctx.fillText('OUT', x + w / 2, y + h / 2 + size * 0.62);
     ctx.restore();
   }
 
@@ -1482,79 +1610,79 @@
     const size = state.collage.numberSize / scale;
     const padding = 10 / scale;
     const pos = state.collage.numberPosition;
-    if (pos === 'bc') {
-      ctx.save();
-      ctx.font = `600 ${size}px ${FONT_STACKS.sans}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = Math.max(1 / scale, size * 0.14);
-      ctx.strokeStyle = 'rgba(0,0,0,.45)';
-      ctx.strokeText(String(number), x + w / 2, y + h - padding);
-      ctx.fillStyle = 'rgba(255,255,255,.96)';
-      ctx.fillText(String(number), x + w / 2, y + h - padding);
-      ctx.restore();
-      return;
-    }
-    const align = pos === 'tr' || pos === 'br' ? 'right' : 'left';
-    const baseline = pos === 'bl' || pos === 'br' ? 'bottom' : 'top';
-    const tx = align === 'right' ? x + w - padding : x + padding;
-    const ty = baseline === 'bottom' ? y + h - padding : y + padding;
+    const isRight = pos === 'tr' || pos === 'br';
+    const isLeft = pos === 'tl' || pos === 'bl';
+    const isTop = pos === 'tl' || pos === 'tr';
+    const isBottom = pos === 'bl' || pos === 'br' || pos === 'bc';
+    const align = isRight ? 'right' : isLeft ? 'left' : 'center';
+    const baseline = isTop ? 'top' : isBottom ? 'bottom' : 'middle';
+    const tx = isRight ? x + w - padding : isLeft ? x + padding : x + w / 2;
+    const ty = isTop ? y + padding : isBottom ? y + h - padding : y + h / 2;
+    const text = String(number);
     ctx.save();
-    ctx.font = `600 ${size}px ${FONT_STACKS.sans}`;
+    ctx.font = `600 ${size}px ${FONT_STACKS[state.collage.numberFont] || FONT_STACKS.sans}`;
     ctx.textAlign = align;
     ctx.textBaseline = baseline;
     ctx.lineJoin = 'round';
-    ctx.lineWidth = Math.max(1 / scale, size * 0.14);
-    ctx.strokeStyle = 'rgba(0,0,0,.45)';
-    ctx.strokeText(String(number), tx, ty);
-    ctx.fillStyle = 'rgba(255,255,255,.96)';
-    ctx.fillText(String(number), tx, ty);
+    ctx.globalAlpha = state.collage.numberOpacity / 100;
+    if (state.collage.numberShadowEnabled) {
+      ctx.shadowColor = hexToRgba(state.collage.numberShadowColor, state.collage.numberShadowOpacity / 100);
+      ctx.shadowBlur = state.collage.numberShadowBlur / scale;
+      ctx.shadowOffsetX = state.collage.numberShadowX / scale;
+      ctx.shadowOffsetY = state.collage.numberShadowY / scale;
+    }
+    if (state.collage.numberOutlineEnabled) {
+      ctx.lineWidth = Math.max(1 / scale, state.collage.numberOutlineWidth / scale);
+      ctx.strokeStyle = hexToRgba(state.collage.numberOutlineColor, state.collage.numberOutlineOpacity / 100);
+      ctx.strokeText(text, tx, ty);
+    }
+    ctx.fillStyle = state.collage.numberColor;
+    ctx.fillText(text, tx, ty);
     ctx.restore();
   }
 
-  function collageBaseMetrics() {
-    const cols = clamp(Math.round(state.collage.cols), 1, 8);
-    const rows = clamp(Math.round(state.collage.rows), 1, 8);
+  function collageBaseMetrics(cols, rows, ratio, maxEdge) {
     const cellW = 800;
-    const ratio = collageRatioValue();
     const cellH = cellW / Math.max(0.1, ratio);
-    const gap = cellW * (state.collage.gap / 100);
+    let scale = Math.min(1, maxEdge / Math.max(cols * cellW, rows * cellH));
+    let gap = state.collage.gap / Math.max(0.01, scale);
+    let width = cols * cellW + (cols + 1) * gap;
+    let height = rows * cellH + (rows + 1) * gap;
+    const correctedScale = Math.min(1, maxEdge / Math.max(width, height));
+    if (correctedScale < scale) {
+      scale = correctedScale;
+      gap = state.collage.gap / Math.max(0.01, scale);
+      width = cols * cellW + (cols + 1) * gap;
+      height = rows * cellH + (rows + 1) * gap;
+    }
     return {
-      cols, rows, cellW, cellH, gap,
-      width: cols * cellW + (cols + 1) * gap,
-      height: rows * cellH + (rows + 1) * gap
+      cols, rows, cellW, cellH, gap, scale, width, height
     };
   }
 
   async function renderCollagePage(canvas, pageIndex, maxEdge) {
-    const base = collageBaseMetrics();
-    const scale = Math.min(1, maxEdge / Math.max(base.width, base.height));
-    const width = Math.max(1, Math.round(base.width * scale));
-    const height = Math.max(1, Math.round(base.height * scale));
+    const page = collagePages()[pageIndex];
+    if (!page) return { width: 1, height: 1 };
+    const visible = page.records;
+    const cols = clamp(Math.min(Math.round(state.collage.cols), visible.length), 1, 8);
+    const rows = clamp(Math.ceil(visible.length / cols), 1, 8);
+    const base = collageBaseMetrics(cols, rows, page.ratio, maxEdge);
+    const width = Math.max(1, Math.round(base.width * base.scale));
+    const height = Math.max(1, Math.round(base.height * base.scale));
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
     const ctx = canvas.getContext('2d');
     ctx.save();
-    ctx.scale(scale, scale);
+    ctx.scale(base.scale, base.scale);
     ctx.fillStyle = state.collage.background;
     ctx.fillRect(0, 0, base.width, base.height);
-    const start = pageIndex * perPage();
-    const visible = state.files.slice(start, start + perPage());
-    for (let slot = 0; slot < perPage(); slot++) {
+    for (let slot = 0; slot < visible.length; slot++) {
       const col = slot % base.cols;
       const row = Math.floor(slot / base.cols);
       const x = base.gap + col * (base.cellW + base.gap);
       const y = base.gap + row * (base.cellH + base.gap);
-      const record = visible[slot];
-      if (!record) {
-        ctx.save();
-        roundedRect(ctx, x, y, base.cellW, base.cellH, base.cellW * 0.012);
-        ctx.fillStyle = 'rgba(40,38,30,.045)';
-        ctx.fill();
-        ctx.restore();
-        continue;
-      }
+      const item = visible[slot];
+      const record = item.record;
       const img = await loadImage(record.file);
       ctx.save();
       roundedRect(ctx, x, y, base.cellW, base.cellH, base.cellW * 0.012);
@@ -1573,9 +1701,12 @@
         drawCompositeAsset(ctx, state.assets.small?.image, base.cellW, base.cellH, state.marks.small, 'small');
         ctx.restore();
       }
-      const number = state.collage.numberStart + start + slot;
-      if (isSold(number)) soldOverlay(ctx, x, y, base.cellW, base.cellH);
-      if (state.collage.numberEnabled) drawItemNumber(ctx, number, x, y, base.cellW, base.cellH);
+      const number = state.collage.numberStart + item.fileIndex;
+      const sold = isSold(number);
+      if (sold) soldOverlay(ctx, x, y, base.cellW, base.cellH);
+      if (state.collage.numberEnabled && (!sold || state.collage.numberShowOnSold)) {
+        drawItemNumber(ctx, number, x, y, base.cellW, base.cellH);
+      }
       ctx.restore();
     }
     drawFullscreenLayers(ctx, 0, 0, base.width, base.height, 'after');
@@ -1604,7 +1735,7 @@
       if (!record) return;
       const dims = await renderWatermarkToCanvas(el.previewCanvas, record, page, PREVIEW_EDGE);
       if (token !== state.previewToken) return;
-      el.previewMeta.textContent = `${dims.width} × ${dims.height} · ${record.name}`;
+      el.previewMeta.textContent = `${dims.width} × ${dims.height}`;
     } else {
       const dims = await renderCollagePage(el.previewCanvas, page, PREVIEW_EDGE);
       if (token !== state.previewToken) return;
@@ -1708,6 +1839,12 @@
     clearResultGallery();
     showProgress(true, '正在生成全部成品…', 0);
     const total = pageCount();
+    const columns = [document.createElement('div'), document.createElement('div')];
+    columns.forEach((column) => {
+      column.className = 'result-column';
+      el.resultGrid.appendChild(column);
+    });
+    const columnHeights = [0, 0];
     try {
       for (let page = 0; page < total; page++) {
         const canvas = await createOutputCanvasForPage(page);
@@ -1731,7 +1868,9 @@
         download.textContent = '下载';
         caption.append(label, download);
         figure.append(image, caption);
-        el.resultGrid.appendChild(figure);
+        const targetColumn = columnHeights[0] <= columnHeights[1] ? 0 : 1;
+        columns[targetColumn].appendChild(figure);
+        columnHeights[targetColumn] += canvas.height / Math.max(1, canvas.width);
 
         showProgress(true, `正在生成第 ${page + 1} / ${total} 张`, Math.round(((page + 1) / total) * 100));
       }
@@ -1958,12 +2097,8 @@
       control.addEventListener(eventName, () => {
         readCollageControl(control);
         sanitizeState();
-        el.numberOptions.hidden = !state.collage.numberEnabled;
-        el.soldOptions.hidden = !state.collage.soldEnabled;
-        if (control.type === 'range') {
-          const output = control.dataset.collage === 'numberSize' ? el.numberSizeValue : el.collageGapValue;
-          syncRange(control, output, control.dataset.collage === 'numberSize' ? 'px' : '%');
-        }
+        updateCollageUi();
+        if (control.type === 'range') syncAllRanges();
         state.activePage = clamp(state.activePage, 0, Math.max(0, pageCount() - 1));
         syncStageTitle();
         renderQueue();

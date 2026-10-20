@@ -89,10 +89,6 @@
           <fieldset class="control-group">
             <legend>快捷预设</legend>
             <div class="preset-grid">
-              <button class="preset-card active" type="button" data-preset="tiled">
-                <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
-                <span><strong>平铺水印</strong><small>全屏署名</small></span>
-              </button>
               <button class="preset-card" type="button" data-preset="gradient">
                 <span class="preset-swatch swatch-gradient">KAKI</span>
                 <span><strong>渐变预览</strong><small>居中署名</small></span>
@@ -198,13 +194,13 @@
                 <label for="bandRightMode">内容类型</label>
                 <select id="bandRightMode" data-watermark="bandRightMode">
                   <option value="date">日期</option>
-                  <option value="custom">自定义文字</option>
                   <option value="price">价格</option>
+                  <option value="custom">自定义文字</option>
                 </select>
               </div>
               <div class="field-block" id="bandCustomField" hidden>
                 <label for="bandCustomText">自定义内容</label>
-                <input id="bandCustomText" type="text" maxlength="40" data-watermark="bandCustomText" placeholder="例如：限量 10 件">
+                <input id="bandCustomText" type="text" maxlength="40" data-watermark="bandCustomText" placeholder="例如：仅展示 不出不共">
               </div>
               <div class="field-block" id="bandPriceField" hidden>
                 <label for="bandPrice">价格</label>
@@ -256,6 +252,13 @@
               <b id="fullscreenCount">0 层</b>
             </summary>
             <div class="module-body">
+              <div class="module-quick-preset">
+                <span>快捷预设</span>
+                <button class="preset-card" type="button" data-preset="tiled">
+                  <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
+                  <span><strong>平铺水印</strong><small>全屏署名</small></span>
+                </button>
+              </div>
               <div class="asset-empty" id="fullscreenEmpty">
                 <div><strong id="fullscreenEmptyTitle">还没有全屏水印</strong><span id="fullscreenEmptyHint">支持 PNG / WEBP · 最多 8 层</span></div>
                 <input type="file" id="fullscreenInput" accept="image/*" multiple hidden>
@@ -486,12 +489,25 @@
           <div class="field-block">
             <label for="collageRatio">单格比例</label>
             <select id="collageRatio" data-collage="ratio">
-              <option value="auto">跟随图片</option>
-              <option value="1">1:1 正方形</option>
-              <option value="0.75">3:4 竖图</option>
-              <option value="0.8">4:5 商品图</option>
-              <option value="0.5625">9:16 长图</option>
+              <option value="auto">自动识别比例</option>
+              <option value="1:1">1:1 正方形</option>
+              <option value="3:4">3:4 竖图</option>
+              <option value="4:3">4:3 横图</option>
+              <option value="9:16">9:16 长图</option>
+              <option value="16:9">16:9 横屏</option>
+              <option value="custom">自定义比例</option>
             </select>
+          </div>
+
+          <div class="two-up control-group" id="customRatioUI" hidden>
+            <div>
+              <label for="customRatioWidth">比例宽</label>
+              <input id="customRatioWidth" type="number" min="1" max="100" step="1" value="4" data-collage="customWidth">
+            </div>
+            <div>
+              <label for="customRatioHeight">比例高</label>
+              <input id="customRatioHeight" type="number" min="1" max="100" step="1" value="5" data-collage="customHeight">
+            </div>
           </div>
 
           <div class="two-up control-group">
@@ -507,8 +523,8 @@
 
           <div class="two-up control-group">
             <div>
-              <label for="collageGap">格子间距 <output id="collageGapValue">4%</output></label>
-              <input id="collageGap" type="range" min="0" max="12" step="0.5" value="4" data-collage="gap">
+              <label for="collageGap">格子间距 <output id="collageGapValue">1.5px</output></label>
+              <input id="collageGap" type="range" min="0" max="40" step="0.5" value="1.5" data-collage="gap">
             </div>
             <div class="color-field">
               <label for="collageBg">画布底色</label>
@@ -527,8 +543,8 @@
               <input id="numberStart" type="number" min="0" max="99999" step="1" value="1" data-collage="numberStart">
             </div>
             <div>
-              <label for="numberSize">编号大小 <output id="numberSizeValue">13px</output></label>
-              <input id="numberSize" type="range" min="8" max="160" step="1" value="13" data-collage="numberSize">
+              <label for="numberSize">编号大小 <output id="numberSizeValue">60px</output></label>
+              <input id="numberSize" type="range" min="12" max="180" step="1" value="60" data-collage="numberSize">
             </div>
           </div>
 
@@ -540,8 +556,84 @@
               <option value="bl">左下</option>
               <option value="tr">右上</option>
               <option value="tl">左上</option>
+              <option value="center">居中</option>
             </select>
           </div>
+
+          <details class="number-style-settings" id="numberStyleSettings">
+            <summary>编号样式 <span>字体、描边与阴影</span></summary>
+            <div class="details-body">
+              <div class="two-up control-group">
+                <div>
+                  <label for="numberFont">编号字体</label>
+                  <select id="numberFont" data-collage="numberFont">
+                    <option value="sans">现代黑体</option>
+                    <option value="serif">典雅宋体</option>
+                    <option value="mono">等宽字体</option>
+                  </select>
+                </div>
+                <div class="color-field">
+                  <label for="numberColor">文字颜色</label>
+                  <input id="numberColor" type="color" value="#ffffff" data-collage="numberColor">
+                </div>
+              </div>
+              <div class="control-group">
+                <label for="numberOpacity">不透明度 <output id="numberOpacityValue">100%</output></label>
+                <input id="numberOpacity" type="range" min="5" max="100" step="1" value="100" data-collage="numberOpacity">
+              </div>
+              <div class="switch-row">
+                <div><strong>编号描边</strong><small>增强复杂画面中的可读性</small></div>
+                <label class="switch"><input id="numberOutlineEnabled" type="checkbox" data-collage="numberOutlineEnabled"><span></span></label>
+              </div>
+              <div class="sold-options" id="numberOutlineOptions" hidden>
+                <div class="two-up">
+                  <div class="color-field">
+                    <label for="numberOutlineColor">描边颜色</label>
+                    <input id="numberOutlineColor" type="color" value="#111111" data-collage="numberOutlineColor">
+                  </div>
+                  <div>
+                    <label for="numberOutlineOpacity">描边不透明度 <output id="numberOutlineOpacityValue">100%</output></label>
+                    <input id="numberOutlineOpacity" type="range" min="0" max="100" step="1" value="100" data-collage="numberOutlineOpacity">
+                  </div>
+                </div>
+                <div>
+                  <label for="numberOutlineWidth">描边粗细 <output id="numberOutlineWidthValue">2px</output></label>
+                  <input id="numberOutlineWidth" type="range" min="0" max="12" step="0.5" value="2" data-collage="numberOutlineWidth">
+                </div>
+              </div>
+              <div class="switch-row">
+                <div><strong>编号阴影</strong><small>让编号从背景中浮起来</small></div>
+                <label class="switch"><input id="numberShadowEnabled" type="checkbox" data-collage="numberShadowEnabled"><span></span></label>
+              </div>
+              <div class="sold-options" id="numberShadowOptions" hidden>
+                <div class="two-up">
+                  <div class="color-field">
+                    <label for="numberShadowColor">阴影颜色</label>
+                    <input id="numberShadowColor" type="color" value="#000000" data-collage="numberShadowColor">
+                  </div>
+                  <div>
+                    <label for="numberShadowOpacity">阴影不透明度 <output id="numberShadowOpacityValue">50%</output></label>
+                    <input id="numberShadowOpacity" type="range" min="0" max="100" step="1" value="50" data-collage="numberShadowOpacity">
+                  </div>
+                </div>
+                <div class="two-up">
+                  <div>
+                    <label for="numberShadowBlur">模糊 <output id="numberShadowBlurValue">8px</output></label>
+                    <input id="numberShadowBlur" type="range" min="0" max="40" step="1" value="8" data-collage="numberShadowBlur">
+                  </div>
+                  <div>
+                    <label for="numberShadowX">水平距离 <output id="numberShadowXValue">2px</output></label>
+                    <input id="numberShadowX" type="range" min="-20" max="20" step="0.5" value="2" data-collage="numberShadowX">
+                  </div>
+                </div>
+                <div>
+                  <label for="numberShadowY">垂直距离 <output id="numberShadowYValue">2px</output></label>
+                  <input id="numberShadowY" type="range" min="-20" max="20" step="0.5" value="2" data-collage="numberShadowY">
+                </div>
+              </div>
+              <label class="check-line"><input id="numberShowOnSold" type="checkbox" checked data-collage="numberShowOnSold"> 被遮挡图片仍显示编号</label>
+            </div>
+          </details>
 
           <div class="switch-row">
             <div><strong>标记已售作品</strong><small>按编号添加遮挡，继续展示目录</small></div>
@@ -618,8 +710,8 @@
             </div>
           </div>
           <div class="export-preview-bar">
-            <button class="button secondary compact" id="previewAllBtn" type="button">加载全部成品</button>
             <span>生成后会陈列在下方，iOS 可直接长按图片保存。</span>
+            <button class="button secondary compact" id="previewAllBtn" type="button">加载全部成品</button>
           </div>
         </details>
 

@@ -6,7 +6,7 @@ A local-first batch image marking workspace for artists, photographers and small
 
 - **Two focused workspaces**
   - **Single-image watermark** — tiled pattern, gradient fade, or a bottom information band with optional date, custom text, or RMB price.
-  - **Contact-sheet collage** — configurable rows and columns, adjustable numbering, and numbered occlusion masks.
+  - **Contact-sheet collage** — automatic ratio grouping, fixed or custom ratios, configurable rows and columns, and numbered occlusion masks.
 - **Three compositing modules shared by both workspaces**
   - **Full-screen watermark** — import up to eight transparent textures, with per-layer opacity, blend mode, fit mode, and before/after-collage placement.
   - **Watermark frame** — import a frame, replace its ink color while preserving the detected foreground, add a shadow, and choose whether it is applied to each cell or the finished sheet.
@@ -16,7 +16,8 @@ A local-first batch image marking workspace for artists, photographers and small
 - **Fine-grained controls** — shadow distances and text outline strength use fine steps and scale proportionally with the rendered canvas.
 - **Batch export** — write JPEG or PNG at a locked 2400 px long edge by default, unlock other sizes when needed, download one image, package the set as a ZIP, or load every finished image into an iOS-friendly long-press gallery.
 - **First-run guide** — an animated three-step introduction appears on the first visit and can be reopened from the header.
-- **Image inspection** — click any queued thumbnail to inspect the original image at a larger size; destructive removal requires confirmation.
+- **Image inspection** — double-click any queued thumbnail to inspect the original image at a larger size; destructive removal requires confirmation.
+- **Number styling** — choose font, color, opacity, outline, shadow, size, and six placement anchors, including a centered-sheet position.
 - **Local and private** — files stay in the browser tab. There is no upload endpoint, account, tracking pixel, or analytics script.
 - **Resilient by design** — validated controls, bounded canvas sizes, failed-image handling, object URL cleanup, keyboard navigation, and a responsive mobile layout.
 - **Self-contained dependencies** — JSZip is vendored in this repository, so the core export flow does not depend on a third-party CDN.
@@ -38,6 +39,10 @@ Then visit `http://localhost:8080`.
 5. Export the current image or every page as a ZIP.
 
 In collage mode, a full-screen layer set to **before collage** is composited onto every source photograph before the contact sheet is assembled. **After collage** layers cover the finished sheet. Watermark frames and small watermarks can independently target every cell or the finished sheet.
+
+Automatic ratio mode groups similar image shapes together even when they are not adjacent, then sizes each page to the actual number of images instead of leaving blank cells. Fixed presets and custom width/height ratios use a consistent crop frame.
+
+The loaded-results gallery uses a two-column masonry-style flow based on each image's real aspect ratio, so portrait, square, and landscape outputs do not force empty card space.
 
 ### Number tokens
 
