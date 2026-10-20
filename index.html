@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f1e9">
+  <meta name="description" content="Kaki Mark Studio：在浏览器本地批量添加图片水印、编号并导出。图片不会上传。">
+  <title>Kaki Mark Studio · 批量图片水印</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Kaki Mark Studio 首页">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="brand-copy">
+        <strong>Kaki Mark Studio</strong>
+        <small>image marking workspace</small>
+      </span>
+    </a>
+    <div class="top-actions">
+      <span class="privacy-pill">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"/><path d="M12 14v2"/></svg>
+        仅在本机处理
+      </span>
+      <button class="icon-button" id="resetSettingsBtn" type="button" title="恢复默认设置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7v5h5M5.5 17a8 8 0 1 0-.7-9.7L4 12"/></svg>
+        <span>恢复默认</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> BATCH MARKING, REIMAGINED</p>
+        <h1>把署名，做成<br><em>作品的一部分。</em></h1>
+        <p class="hero-lead">上传一组图片，实时预览署名、编号与售卖状态，然后一键导出整套成品。</p>
+      </div>
+      <ol class="flow" aria-label="使用步骤">
+        <li><span>01</span><div><strong>导入作品</strong><small>拖入 JPG / PNG / WEBP</small></div></li>
+        <li><span>02</span><div><strong>选择版式</strong><small>水印或目录拼图</small></div></li>
+        <li><span>03</span><div><strong>批量带走</strong><small>逐个 JPEG 或 ZIP 打包</small></div></li>
+      </ol>
+    </section>
+
+    <section class="library panel" aria-labelledby="libraryTitle">
+      <div class="section-heading">
+        <div>
+          <p class="overline">YOUR IMAGES</p>
+          <h2 id="libraryTitle">作品队列</h2>
+        </div>
+        <div class="library-meta" id="libraryMeta">尚未导入图片</div>
+      </div>
+
+      <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="选择或拖入图片">
+        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+        <div class="drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M16 22V7m0 0-6 6m6-6 6 6"/><path d="M6 21v4h20v-4"/></svg>
+        </div>
+        <div class="drop-copy">
+          <strong>把作品拖到这里</strong>
+          <span>或点击选择多张图片 · 图片不会离开你的设备</span>
+        </div>
+        <span class="button secondary compact">选择图片</span>
+      </div>
+
+      <div class="queue-view" id="queueView" hidden>
+        <div class="queue-scroll" id="queueStrip" aria-label="图片列表，可拖拽排序"></div>
+        <div class="queue-footer">
+          <span>拖拽缩略图可调整顺序</span>
+          <button class="text-button danger" id="clearImagesBtn" type="button">清空全部</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="control-panel panel">
+        <div class="panel-title-row">
+          <div>
+            <p class="overline">CONFIGURATION</p>
+            <h2>标记设置</h2>
+          </div>
+          <span class="live-dot"><i></i> 实时预览</span>
+        </div>
+
+        <div class="mode-switch" role="tablist" aria-label="工作模式">
+          <button class="mode-tab active" id="watermarkTab" type="button" role="tab" aria-selected="true" data-mode="watermark">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="m9 15 6-6m0 6h-6V9"/></svg>
+            单图水印
+          </button>
+          <button class="mode-tab" id="collageTab" type="button" role="tab" aria-selected="false" data-mode="collage">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg>
+            目录拼图
+          </button>
+        </div>
+
+        <div class="mode-panel" id="watermarkPanel">
+          <fieldset class="control-group">
+            <legend>一键预设</legend>
+            <div class="preset-grid">
+              <button class="preset-card active" type="button" data-preset="corner">
+                <span class="preset-swatch swatch-corner">Aa</span>
+                <span><strong>角落署名</strong><small>克制、日常</small></span>
+              </button>
+              <button class="preset-card" type="button" data-preset="tiled">
+                <span class="preset-swatch swatch-tiled">Aa Aa Aa</span>
+                <span><strong>防盗平铺</strong><small>低调但难裁</small></span>
+              </button>
+              <button class="preset-card" type="button" data-preset="center">
+                <span class="preset-swatch swatch-center">Aa</span>
+                <span><strong>中央品牌</strong><small>适合封面</small></span>
+              </button>
+              <button class="preset-card" type="button" data-preset="band">
+                <span class="preset-swatch swatch-band">KAKI / 001</span>
+                <span><strong>底栏信息</strong><small>清晰署名</small></span>
+              </button>
+            </div>
+          </fieldset>
+
+          <div class="field-block">
+            <label for="watermarkText">水印文字</label>
+            <input id="watermarkText" type="text" maxlength="60" autocomplete="off" data-watermark="text">
+            <p class="field-hint">建议使用品牌名、作者名或简短编号。</p>
+          </div>
+
+          <div class="control-group compact-grid two-up">
+            <div>
+              <label for="watermarkSize">字号 <output id="watermarkSizeValue">3.2%</output></label>
+              <input id="watermarkSize" type="range" min="1" max="18" step="0.1" value="3.2" data-watermark="size">
+            </div>
+            <div>
+              <label for="watermarkOpacity">不透明度 <output id="watermarkOpacityValue">82%</output></label>
+              <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="82" data-watermark="opacity">
+            </div>
+          </div>
+
+          <div class="control-group compact-grid two-up" id="cornerOptions">
+            <div>
+              <label for="watermarkPosition">落点</label>
+              <select id="watermarkPosition" data-watermark="position">
+                <option value="br">右下</option>
+                <option value="bl">左下</option>
+                <option value="tr">右上</option>
+                <option value="tl">左上</option>
+                <option value="center">居中</option>
+              </select>
+            </div>
+            <div>
+              <label for="watermarkMargin">边距 <output id="watermarkMarginValue">4%</output></label>
+              <input id="watermarkMargin" type="range" min="2" max="15" step="0.5" value="4" data-watermark="margin">
+            </div>
+          </div>
+
+          <div class="control-group compact-grid two-up" id="tiledOptions" hidden>
+            <div>
+              <label for="watermarkRotate">倾斜角度 <output id="watermarkRotateValue">-24°</output></label>
+              <input id="watermarkRotate" type="range" min="-45" max="45" step="1" value="-24" data-watermark="rotate">
+            </div>
+            <div>
+              <label for="watermarkGap">重复间距 <output id="watermarkGapValue">18</output></label>
+              <input id="watermarkGap" type="range" min="8" max="36" step="1" value="18" data-watermark="gap">
+            </div>
+          </div>
+
+          <details class="more-options">
+            <summary>字体与描边 <span>细节调整</span></summary>
+            <div class="details-body">
+              <div class="field-block">
+                <label for="watermarkFont">字体</label>
+                <select id="watermarkFont" data-watermark="font">
+                  <option value="sans">现代黑体</option>
+                  <option value="serif">典雅宋体</option>
+                  <option value="mono">等宽字体</option>
+                </select>
+              </div>
+              <div class="two-up">
+                <div class="color-field">
+                  <label for="watermarkColor">文字颜色</label>
+                  <input id="watermarkColor" type="color" value="#ffffff" data-watermark="color">
+                </div>
+                <div class="color-field">
+                  <label for="strokeColor">描边颜色</label>
+                  <input id="strokeColor" type="color" value="#111111" data-watermark="strokeColor">
+                </div>
+              </div>
+              <div>
+                <label for="watermarkStroke">描边强度 <output id="watermarkStrokeValue">0%</output></label>
+                <input id="watermarkStroke" type="range" min="0" max="12" step="0.5" value="0" data-watermark="stroke">
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="mode-panel" id="collagePanel" hidden>
+          <div class="field-block">
+            <label for="collageRatio">单格比例</label>
+            <select id="collageRatio" data-collage="ratio">
+              <option value="auto">跟随图片</option>
+              <option value="1">1:1 正方形</option>
+              <option value="0.75">3:4 竖图</option>
+              <option value="0.8">4:5 商品图</option>
+              <option value="0.5625">9:16 长图</option>
+            </select>
+          </div>
+
+          <div class="two-up control-group">
+            <div>
+              <label for="collageRows">每页行数</label>
+              <input id="collageRows" type="number" min="1" max="8" step="1" value="3" data-collage="rows">
+            </div>
+            <div>
+              <label for="collageCols">每页列数</label>
+              <input id="collageCols" type="number" min="1" max="8" step="1" value="3" data-collage="cols">
+            </div>
+          </div>
+
+          <div class="two-up control-group">
+            <div>
+              <label for="collageGap">格子间距 <output id="collageGapValue">4%</output></label>
+              <input id="collageGap" type="range" min="0" max="12" step="0.5" value="4" data-collage="gap">
+            </div>
+            <div class="color-field">
+              <label for="collageBg">画布底色</label>
+              <input id="collageBg" type="color" value="#fbfaf7" data-collage="background">
+            </div>
+          </div>
+
+          <div class="switch-row">
+            <div><strong>显示编号</strong><small>按作品队列顺序连续编号</small></div>
+            <label class="switch"><input id="numberEnabled" type="checkbox" checked data-collage="numberEnabled"><span></span></label>
+          </div>
+
+          <div class="control-group compact-grid two-up" id="numberOptions">
+            <div>
+              <label for="numberStart">起始编号</label>
+              <input id="numberStart" type="number" min="0" max="99999" step="1" value="1" data-collage="numberStart">
+            </div>
+            <div>
+              <label for="numberPosition">编号位置</label>
+              <select id="numberPosition" data-collage="numberPosition">
+                <option value="br">右下</option>
+                <option value="bl">左下</option>
+                <option value="tr">右上</option>
+                <option value="tl">左上</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="switch-row">
+            <div><strong>标记已售作品</strong><small>按编号添加遮罩，继续展示目录</small></div>
+            <label class="switch"><input id="soldEnabled" type="checkbox" data-collage="soldEnabled"><span></span></label>
+          </div>
+
+          <div class="sold-options" id="soldOptions" hidden>
+            <label for="soldNumbers">已售编号</label>
+            <input id="soldNumbers" type="text" placeholder="例如：1, 3-5, 8.9" data-collage="soldNumbers">
+            <label class="check-line"><input id="remainingMode" type="checkbox" data-collage="remainingMode"> 输入的是未售编号，其余全部遮挡</label>
+          </div>
+
+          <div class="switch-row">
+            <div><strong>格子内叠加署名</strong><small>使用“单图水印”中的文字与样式</small></div>
+            <label class="switch"><input id="cellMarkEnabled" type="checkbox" data-collage="cellMarkEnabled"><span></span></label>
+          </div>
+
+          <p class="tip-box"><span>提示</span> 空白格会保留为画布底色，确保每一页尺寸一致，方便直接发布。</p>
+        </div>
+
+        <details class="export-settings" open>
+          <summary>导出设置 <span>JPEG / ZIP</span></summary>
+          <div class="details-body">
+            <div class="two-up">
+              <div>
+                <label for="exportEdge">长边像素</label>
+                <select id="exportEdge" data-export="edge">
+                  <option value="1600">1600 px</option>
+                  <option value="2400">2400 px</option>
+                  <option value="3200">3200 px</option>
+                  <option value="4000">4000 px</option>
+                </select>
+              </div>
+              <div>
+                <label for="exportQuality">JPEG 画质 <output id="exportQualityValue">92%</output></label>
+                <input id="exportQuality" type="range" min="70" max="100" step="1" value="92" data-export="quality">
+              </div>
+            </div>
+            <div class="field-block">
+              <label for="filePrefix">文件名前缀</label>
+              <input id="filePrefix" type="text" maxlength="30" value="kaki" data-export="prefix">
+            </div>
+          </div>
+        </details>
+      </aside>
+
+      <section class="stage panel" aria-labelledby="stageTitle">
+        <div class="stage-heading">
+          <div>
+            <p class="overline">LIVE CANVAS</p>
+            <h2 id="stageTitle">单图水印预览</h2>
+          </div>
+          <div class="stage-chip" id="previewMeta">等待图片</div>
+        </div>
+
+        <div class="preview-surface" id="previewSurface">
+          <canvas id="previewCanvas" aria-label="处理效果预览"></canvas>
+          <div class="empty-state" id="emptyState">
+            <div class="empty-art" aria-hidden="true">
+              <span class="empty-sheet back"></span>
+              <span class="empty-sheet front">
+                <i class="empty-mark">KM</i>
+                <i class="empty-index">01</i>
+              </span>
+              <span class="empty-spark">✦</span>
+            </div>
+            <h3>先放一张作品进来</h3>
+            <p>拖入图片后，这里会立即显示可下载的最终效果。</p>
+            <button class="button primary" id="emptySelectBtn" type="button">选择图片</button>
+            <small>图片只在当前浏览器内处理</small>
+          </div>
+        </div>
+
+        <div class="stage-actions">
+          <div class="pager" id="pager">
+            <button class="icon-button square" id="prevBtn" type="button" aria-label="上一张" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <span id="pagerLabel">0 / 0</span>
+            <button class="icon-button square" id="nextBtn" type="button" aria-label="下一张" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="action-group">
+            <button class="button secondary" id="downloadCurrentBtn" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+              下载当前
+            </button>
+            <button class="button primary" id="exportAllBtn" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+              <span id="exportAllLabel">批量导出 ZIP</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap" hidden>
+          <div class="progress-copy"><span id="progressText">正在准备…</span><strong id="progressPercent">0%</strong></div>
+          <div class="progress-track"><i id="progressBar"></i></div>
+        </div>
+      </section>
+    </section>
+
+    <footer class="site-footer">
+      <span>Kaki Mark Studio <b>01</b></span>
+      <p>浏览器本地处理 · 不上传图片 · 不追踪数据</p>
+      <span>Built for makers.</span>
+    </footer>
+  </main>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+  <script src="assets/vendor/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
