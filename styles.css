@@ -2,7 +2,10 @@
 @font-face{font-family:"Kaki Sans";src:local("PingFang SC"),local("Hiragino Sans GB"),local("Microsoft YaHei");font-display:swap}
 @font-face{font-family:"Alfa Slab One";src:url("assets/fonts/alfa-slab-one-latin.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:"Bebas Neue";src:url("assets/fonts/bebas-neue-latin.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
-@font-face{font-family:"ZCOOL KuaiLe";src:url("assets/fonts/zcool-kuaile-regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"ZCOOL KuaiLe";src:url("assets/fonts/zcool-kuaile-regular.ttf") format("truetype");font-style:normal;font-weight:400 900;font-display:swap}
+@font-face{font-family:"Kaki Butter Bread";src:url("assets/fonts/butter-bread.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Kaki Huiwen Mincho";src:url("assets/fonts/huiwen-mincho.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Kaki Love Song";src:url("assets/fonts/y17-love-song-new.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
 :root{
   --paper:#f3f1e9;--paper-deep:#eae6da;--surface:#fbfaf6;--surface-2:#f5f2e9;
   --ink:#26251f;--ink-soft:#666257;--ink-faint:#918b7d;--line:rgba(45,42,33,.13);

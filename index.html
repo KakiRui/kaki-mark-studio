@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f3f1e9">
   <meta name="description" content="Kaki Mark Studio：在浏览器本地批量添加图片水印、编号并导出。图片不会上传。">
   <title>Kaki Mark Studio · 批量图片水印</title>
-  <link rel="stylesheet" href="styles.css?v=dianmo-local-2">
+  <link rel="stylesheet" href="styles.css?v=fonts-4">
 </head>
 <body>
   <header class="topbar">
@@ -248,12 +248,19 @@
               <div class="field-block">
                 <label for="watermarkFont">字体</label>
                 <select id="watermarkFont" data-watermark="font">
-                  <option value="sans">现代黑体</option>
-                  <option value="serif">典雅宋体</option>
-                  <option value="mono" selected>等宽字体</option>
-                  <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
-                  <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
-                  <option value="zcool-kuaile">站酷快乐体</option>
+                  <optgroup label="中文与通用">
+                    <option value="sans">现代黑体</option>
+                    <option value="serif">典雅宋体</option>
+                    <option value="mono" selected>等宽字体</option>
+                    <option value="zcool-kuaile">站酷快乐体</option>
+                    <option value="butter-bread">黄油面包</option>
+                    <option value="huiwen-mincho">汇文明朝体</option>
+                  </optgroup>
+                  <optgroup label="仅英文字体">
+                    <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
+                    <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
+                    <option value="love-song">Love Song（仅英文）</option>
+                  </optgroup>
                 </select>
               </div>
               <div class="two-up">
@@ -349,12 +356,19 @@
                       <div class="field-block">
                         <label for="fullscreenPresetFont">字体</label>
                         <select id="fullscreenPresetFont" data-fullscreen-preset="font">
-                          <option value="sans">现代黑体</option>
-                          <option value="serif">典雅宋体</option>
-                          <option value="mono" selected>等宽字体</option>
-                          <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
-                          <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
-                          <option value="zcool-kuaile">站酷快乐体</option>
+                          <optgroup label="中文与通用">
+                            <option value="sans">现代黑体</option>
+                            <option value="serif">典雅宋体</option>
+                            <option value="mono" selected>等宽字体</option>
+                            <option value="zcool-kuaile">站酷快乐体</option>
+                            <option value="butter-bread">黄油面包</option>
+                            <option value="huiwen-mincho">汇文明朝体</option>
+                          </optgroup>
+                          <optgroup label="仅英文字体">
+                            <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
+                            <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
+                            <option value="love-song">Love Song（仅英文）</option>
+                          </optgroup>
                         </select>
                       </div>
                       <div class="two-up">
@@ -691,12 +705,19 @@
                 <div>
                   <label for="numberFont">编号字体</label>
                   <select id="numberFont" data-collage="numberFont">
-                    <option value="sans">现代黑体</option>
-                    <option value="serif">典雅宋体</option>
-                    <option value="mono">等宽字体</option>
-                    <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
-                    <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
-                    <option value="zcool-kuaile">站酷快乐体</option>
+                    <optgroup label="中文与通用">
+                      <option value="sans">现代黑体</option>
+                      <option value="serif">典雅宋体</option>
+                      <option value="mono">等宽字体</option>
+                      <option value="zcool-kuaile">站酷快乐体</option>
+                      <option value="butter-bread">黄油面包</option>
+                      <option value="huiwen-mincho">汇文明朝体</option>
+                    </optgroup>
+                    <optgroup label="仅英文字体">
+                      <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
+                      <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
+                      <option value="love-song">Love Song（仅英文）</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div class="color-field">
@@ -921,6 +942,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
   <script src="assets/vendor/jszip.min.js"></script>
-  <script src="app.js?v=dianmo-local-2"></script>
+  <script src="app.js?v=fonts-4"></script>
 </body>
 </html>
