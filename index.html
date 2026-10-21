@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f3f1e9">
   <meta name="description" content="Kaki Mark Studio：在浏览器本地批量添加图片水印、编号并导出。图片不会上传。">
   <title>Kaki Mark Studio · 批量图片水印</title>
-  <link rel="stylesheet" href="styles.css?v=release-1">
+  <link rel="stylesheet" href="styles.css?v=dianmo-local-2">
 </head>
 <body>
   <header class="topbar">
@@ -68,6 +68,11 @@
           <button class="theme-option" type="button" role="menuitemradio" aria-checked="false" data-theme-option="lotus-pink">
             <span class="theme-option-swatch theme-option-lotus" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="theme-option-copy"><strong>藕荷</strong><small>粉紫 · 雾灰</small></span>
+            <span class="theme-option-check" aria-hidden="true"></span>
+          </button>
+          <button class="theme-option" type="button" role="menuitemradio" aria-checked="false" data-theme-option="dianmo">
+            <span class="theme-option-swatch theme-option-dianmo" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-copy"><strong>点墨</strong><small>黑白灰 · 彩点</small></span>
             <span class="theme-option-check" aria-hidden="true"></span>
           </button>
         </div>
@@ -246,6 +251,9 @@
                   <option value="sans">现代黑体</option>
                   <option value="serif">典雅宋体</option>
                   <option value="mono" selected>等宽字体</option>
+                  <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
+                  <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
+                  <option value="zcool-kuaile">站酷快乐体</option>
                 </select>
               </div>
               <div class="two-up">
@@ -344,6 +352,9 @@
                           <option value="sans">现代黑体</option>
                           <option value="serif">典雅宋体</option>
                           <option value="mono" selected>等宽字体</option>
+                          <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
+                          <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
+                          <option value="zcool-kuaile">站酷快乐体</option>
                         </select>
                       </div>
                       <div class="two-up">
@@ -683,6 +694,9 @@
                     <option value="sans">现代黑体</option>
                     <option value="serif">典雅宋体</option>
                     <option value="mono">等宽字体</option>
+                    <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
+                    <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
+                    <option value="zcool-kuaile">站酷快乐体</option>
                   </select>
                 </div>
                 <div class="color-field">
@@ -907,6 +921,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
   <script src="assets/vendor/jszip.min.js"></script>
-  <script src="app.js?v=release-1"></script>
+  <script src="app.js?v=dianmo-local-2"></script>
 </body>
 </html>

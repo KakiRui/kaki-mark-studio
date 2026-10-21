@@ -13,7 +13,8 @@
     'frost-indigo': { label: '霜黛', metaColor: '#eceff2' },
     'pine-smoke': { label: '松烟青', metaColor: '#edefe9' },
     haitang: { label: '海棠', metaColor: '#f5f0ea' },
-    'lotus-pink': { label: '藕荷', metaColor: '#f6f2f4' }
+    'lotus-pink': { label: '藕荷', metaColor: '#f6f2f4' },
+    dianmo: { label: '点墨', metaColor: '#111214' }
   });
 
   const WATERMARK_DEFAULTS = Object.freeze({
@@ -157,7 +158,10 @@
   const FONT_STACKS = {
     sans: '"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",sans-serif',
     serif: '"Songti SC","STSong","SimSun",Georgia,serif',
-    mono: '"SFMono-Regular",Consolas,"Liberation Mono",monospace'
+    mono: '"SFMono-Regular",Consolas,"Liberation Mono",monospace',
+    'alfa-slab': '"Alfa Slab One","Kaki Sans",sans-serif',
+    'bebas-neue': '"Bebas Neue","Kaki Sans",sans-serif',
+    'zcool-kuaile': '"ZCOOL KuaiLe","Kaki Sans",sans-serif'
   };
 
   const state = {
@@ -1386,6 +1390,15 @@
     }, 70);
   }
 
+  function warmCustomFonts() {
+    if (!document.fonts) return;
+    const fontNames = ['"Alfa Slab One"', '"Bebas Neue"', '"ZCOOL KuaiLe"'];
+    const loaders = typeof document.fonts.load === 'function'
+      ? fontNames.map((family) => document.fonts.load(`600 24px ${family}`))
+      : [];
+    Promise.allSettled([...loaders, document.fonts.ready]).then(() => schedulePreview());
+  }
+
   function resolveWatermarkText(template, index) {
     const number = state.collage.numberStart + index;
     return String(template || '').replace(/\{n\}/gi, String(number)).replace(/\{nn\}/gi, pad(number));
@@ -2467,6 +2480,7 @@
     updateActionAvailability();
     syncStageTitle();
     schedulePreview();
+    warmCustomFonts();
     let onboardingSeen = false;
     try {
       onboardingSeen = localStorage.getItem(ONBOARDING_KEY) === 'seen';
