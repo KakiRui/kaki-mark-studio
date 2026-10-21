@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f3f1e9">
   <meta name="description" content="Kaki Mark Studio：在浏览器本地批量添加图片水印、编号并导出。图片不会上传。">
   <title>Kaki Mark Studio · 批量图片水印</title>
-  <link rel="stylesheet" href="styles.css?v=fonts-4">
+  <link rel="stylesheet" href="styles.css?v=kaki-psd-5">
 </head>
 <body>
   <header class="topbar">
@@ -145,6 +145,10 @@
                 <span class="preset-swatch swatch-band">KAKI / 001</span>
                 <span><strong>底栏信息</strong><small>清晰署名</small></span>
               </button>
+              <button class="preset-card" type="button" data-signature-preset-option="kaki-psd">
+                <span class="preset-swatch swatch-kaki-psd">@Kaki</span>
+                <span><strong>爱心预览</strong><small>固定模板 · 可改署名</small></span>
+              </button>
             </div>
           </div>
           <details class="preset-settings" id="presetSettingsDetails" open>
@@ -167,12 +171,13 @@
             <input id="gradientHeight" type="range" min="15" max="75" step="1" value="48" data-watermark="gradientHeight">
           </div>
 
-          <div class="field-block">
+          <div class="field-block" id="watermarkTextBlock">
             <label for="watermarkText">水印文字</label>
             <input id="watermarkText" type="text" maxlength="60" autocomplete="off" data-watermark="text">
+            <p class="field-hint preset-lock-note" id="kakiPresetLockNote" hidden>预设署名位置、字号、字体和效果已锁定，仅可修改署名文字。</p>
           </div>
 
-          <div class="control-group compact-grid two-up">
+          <div class="control-group compact-grid two-up" id="watermarkScaleOptions">
             <div>
               <label for="watermarkOpacity">不透明度 <output id="watermarkOpacityValue">100%</output></label>
               <input id="watermarkOpacity" type="range" min="5" max="100" step="1" value="100" data-watermark="opacity">
@@ -242,7 +247,7 @@
             </div>
           </div>
 
-          <details class="more-options">
+          <details class="more-options" id="watermarkTypeOptions">
             <summary>字体与描边 <span>细节调整</span></summary>
             <div class="details-body">
               <div class="field-block">
@@ -260,6 +265,7 @@
                     <option value="alfa-slab">阿尔法粗衬线（仅英文）</option>
                     <option value="bebas-neue">贝巴斯窄体（仅英文）</option>
                     <option value="love-song">Love Song（仅英文）</option>
+                    <option value="javacom" hidden>Javacom（PSD 原版）</option>
                   </optgroup>
                 </select>
               </div>
@@ -942,6 +948,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
   <script src="assets/vendor/jszip.min.js"></script>
-  <script src="app.js?v=fonts-4"></script>
+  <script src="app.js?v=kaki-psd-5"></script>
 </body>
 </html>

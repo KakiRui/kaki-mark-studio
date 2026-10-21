@@ -8,6 +8,7 @@
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const THEME_KEY = 'kaki-mark-studio-theme-v5';
   const PREVIEW_EDGE = 1500;
+  const KAKI_PSD_TEMPLATE_SRC = 'assets/presets/kaki-heart-template.png?v=3';
   const THEMES = Object.freeze({
     original: { label: '原色纸张', metaColor: '#f3f1e9' },
     'frost-indigo': { label: '霜黛', metaColor: '#eceff2' },
@@ -83,7 +84,36 @@
 
   const PRESETS = Object.freeze({
     gradient: { opacity: 100, size: 5, stroke: 2, gradientStrength: 100, gradientHeight: 50, font: 'sans' },
-    band: { opacity: 100, size: 3.5, stroke: 6, font: 'mono', bandOpacity: 65, bandRightEnabled: true, bandRightMode: 'date' }
+    band: { opacity: 100, size: 3.5, stroke: 6, font: 'mono', bandOpacity: 65, bandRightEnabled: true, bandRightMode: 'date' },
+    'kaki-psd': { text: '@Kaki', opacity: 100, size: 6.2165, position: 'br', rotate: -6, font: 'javacom', color: '#000000', strokeColor: '#ffffff', stroke: 0 }
+  });
+
+  // Derived from the 2000 × 2000 PSD's @Kaki text layer and its group effects.
+  const KAKI_PSD_SIGNATURE = Object.freeze({
+    text: '@Kaki',
+    fontSizePercent: 6.2165,
+    anchorX: 1804.4352631642366 / 2000,
+    anchorY: 1467.6211535336402 / 2000,
+    rotate: -6,
+    font: 'javacom',
+    color: '#000000',
+    strokeColor: '#ffffff',
+    strokeWidth: 5 / 2000,
+    shadowAngle: 109,
+    shadowDistance: 4 / 2000,
+    shadowBlur: 4 / 2000,
+    shadowOpacity: 0.45
+  });
+
+  const KAKI_PSD_FIXED_SETTINGS = Object.freeze({
+    opacity: 100,
+    size: KAKI_PSD_SIGNATURE.fontSizePercent,
+    position: 'br',
+    rotate: KAKI_PSD_SIGNATURE.rotate,
+    font: KAKI_PSD_SIGNATURE.font,
+    color: KAKI_PSD_SIGNATURE.color,
+    strokeColor: KAKI_PSD_SIGNATURE.strokeColor,
+    stroke: 0
   });
 
   const PRESET_ALIASES = { corner: 'none', center: 'gradient', double: 'none' };
@@ -164,7 +194,8 @@
     'zcool-kuaile': '"ZCOOL KuaiLe","Kaki Sans",sans-serif',
     'butter-bread': '"Kaki Butter Bread","Kaki Sans",sans-serif',
     'huiwen-mincho': '"Kaki Huiwen Mincho","Kaki Serif",serif',
-    'love-song': '"Kaki Love Song","Kaki Sans",cursive'
+    'love-song': '"Kaki Love Song","Kaki Sans",cursive',
+    javacom: '"Javacom",cursive'
   };
 
   const CUSTOM_FONT_FAMILIES = Object.freeze({
@@ -173,7 +204,8 @@
     'zcool-kuaile': '"ZCOOL KuaiLe"',
     'butter-bread': '"Kaki Butter Bread"',
     'huiwen-mincho': '"Kaki Huiwen Mincho"',
-    'love-song': '"Kaki Love Song"'
+    'love-song': '"Kaki Love Song"',
+    javacom: '"Javacom"'
   });
 
   const state = {
@@ -203,6 +235,8 @@
   let previewTimer = 0;
   let resizeTimer = 0;
   let currentTheme = 'original';
+  let kakiTemplateImage = null;
+  let kakiTemplatePromise = null;
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const numberOr = (value, fallback) => {
@@ -241,7 +275,7 @@
     const ids = [
       'resetSettingsBtn','dropZone','fileInput','queueView','queueStrip','libraryMeta',
       'clearImagesBtn','watermarkTab','collageTab','watermarkPanel','collagePanel',
-      'watermarkText','watermarkSize','watermarkSizeValue','watermarkOpacity','watermarkOpacityValue',
+      'watermarkText','watermarkTextBlock','watermarkSize','watermarkSizeValue','watermarkOpacity','watermarkOpacityValue',
       'watermarkPosition','watermarkMargin','watermarkMarginValue','watermarkFont','watermarkColor',
       'strokeColor','watermarkStroke','watermarkStrokeValue','cornerOptions',
       'bandOptions','bandBackground','bandOpacity','bandOpacityValue','bandRightCombo',
@@ -249,6 +283,7 @@
       'bandCustomField','bandCustomText','bandPriceField','bandPrice',
       'gradientColor','gradientStrength','gradientStrengthValue','gradientHeight',
       'gradientHeightValue','gradientOptions','gradientHeightOptions',
+      'watermarkScaleOptions','watermarkTypeOptions','kakiPresetLockNote',
       'collageRatio','customRatioUI','customRatioWidth','customRatioHeight',
       'collageRows','collageCols','collageGap','collageGapValue','collageBg',
       'numberEnabled','numberStyleSettings','numberStart','numberSize','numberSizeValue','numberPosition','soldEnabled','soldOptions','soldNumbers',
@@ -495,10 +530,16 @@
     el.numberOptions.hidden = !state.collage.numberEnabled;
     el.numberStyleSettings.hidden = !state.collage.numberEnabled;
     el.soldOptions.hidden = !state.collage.soldEnabled;
+    const fixedKakiPreset = state.watermark.preset === 'kaki-psd';
     el.cornerOptions.hidden = true;
     el.gradientOptions.hidden = state.watermark.preset !== 'gradient';
     el.gradientHeightOptions.hidden = state.watermark.preset !== 'gradient';
     el.bandOptions.hidden = state.watermark.preset !== 'band';
+    el.watermarkScaleOptions.hidden = fixedKakiPreset;
+    el.watermarkTypeOptions.hidden = fixedKakiPreset;
+    el.kakiPresetLockNote.hidden = !fixedKakiPreset;
+    el.watermarkTextBlock.classList.toggle('is-fixed-preset', fixedKakiPreset);
+    el.watermarkTextBlock.querySelector('label').textContent = fixedKakiPreset ? '署名文字' : '水印文字';
     el.presetSettingsDetails.hidden = false;
     el.presetSettingsDetails.open = state.watermark.preset !== 'none';
     el.fullscreenPresetDetails.hidden = false;
@@ -600,6 +641,7 @@
     wm.gradientHeight = clamp(numberOr(wm.gradientHeight, WATERMARK_DEFAULTS.gradientHeight), 15, 75);
     if (PRESET_ALIASES[wm.preset]) wm.preset = PRESET_ALIASES[wm.preset];
     if (wm.preset !== 'none' && !PRESETS[wm.preset]) wm.preset = WATERMARK_DEFAULTS.preset;
+    if (wm.preset === 'kaki-psd') Object.assign(wm, KAKI_PSD_FIXED_SETTINGS);
     if (!FONT_STACKS[wm.font]) wm.font = WATERMARK_DEFAULTS.font;
     if (!['br','bl','tr','tl','center'].includes(wm.position)) wm.position = WATERMARK_DEFAULTS.position;
     if (!/^#[0-9a-f]{6}$/i.test(wm.color)) wm.color = WATERMARK_DEFAULTS.color;
@@ -722,10 +764,16 @@
     }
     state.watermark.preset = name;
     Object.assign(state.watermark, PRESETS[name]);
+    if (name === 'kaki-psd') state.fullscreenPreset.preset = 'none';
     applyUiFromState();
     el.presetSettingsDetails.open = true;
     persistSettings();
-    schedulePreview();
+    if (name === 'kaki-psd') {
+      preloadKakiTemplate();
+      schedulePreviewForFont('javacom');
+    } else {
+      schedulePreview();
+    }
   }
 
   function applyFullscreenPreset(name) {
@@ -796,6 +844,26 @@
       };
       img.src = url;
     });
+  }
+
+  function preloadKakiTemplate() {
+    if (kakiTemplatePromise) return kakiTemplatePromise;
+    kakiTemplatePromise = new Promise((resolve) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => {
+        kakiTemplateImage = image;
+        resolve(image);
+        schedulePreview();
+      };
+      image.onerror = () => {
+        kakiTemplatePromise = null;
+        console.error('Kaki 爱心模板加载失败');
+        resolve(null);
+      };
+      image.src = KAKI_PSD_TEMPLATE_SRC;
+    });
+    return kakiTemplatePromise;
   }
 
   async function createAssetRecord(file) {
@@ -1518,7 +1586,7 @@
     const minDim = Math.min(boxW, boxH);
     const text = resolveWatermarkText(wm.text, number).trim();
     const rightLabel = preset === 'band' && wm.bandRightEnabled ? bandRightLabel() : '';
-    if (!text && !rightLabel) return;
+    if (!text && !rightLabel && preset !== 'kaki-psd') return;
     const margin = minDim * (wm.margin / 100);
     const baseSize = minDim * (wm.size / 100);
 
@@ -1529,7 +1597,47 @@
     }
     ctx.translate(dims.x, dims.y);
 
-    if (preset === 'gradient') {
+    if (preset === 'kaki-psd') {
+      const style = KAKI_PSD_SIGNATURE;
+      const artSize = minDim;
+      const artX = (boxW - artSize) / 2;
+      const artY = (boxH - artSize) / 2;
+      if (kakiTemplateImage) {
+        ctx.drawImage(kakiTemplateImage, artX, artY, artSize, artSize);
+      }
+      if (!text) {
+        ctx.restore();
+        return;
+      }
+      const size = artSize * (style.fontSizePercent / 100);
+      const strokeWidth = artSize * style.strokeWidth * 2;
+      // PSD's 109° is the global-light angle; Canvas casts the shadow in the opposite direction.
+      const shadowRadians = (style.shadowAngle + 180) * Math.PI / 180;
+      const shadowX = artSize * style.shadowDistance * Math.cos(shadowRadians);
+      const shadowY = -artSize * style.shadowDistance * Math.sin(shadowRadians);
+      const shadowBlur = minDim * style.shadowBlur;
+      ctx.translate(artX + artSize * style.anchorX, artY + artSize * style.anchorY);
+      ctx.rotate(style.rotate * Math.PI / 180);
+      ctx.font = `400 ${size}px ${FONT_STACKS[style.font]}`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'alphabetic';
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(1, strokeWidth);
+      ctx.strokeStyle = style.strokeColor;
+      ctx.shadowColor = `rgba(0,0,0,${style.shadowOpacity})`;
+      ctx.shadowOffsetX = shadowX;
+      ctx.shadowOffsetY = shadowY;
+      ctx.shadowBlur = Math.max(0.5, shadowBlur);
+      ctx.strokeText(text, 0, 0);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowBlur = 0;
+      ctx.strokeText(text, 0, 0);
+      ctx.fillStyle = style.color;
+      ctx.fillText(text, 0, 0);
+    } else if (preset === 'gradient') {
       const gradientHeight = boxH * (wm.gradientHeight / 100);
       const top = boxH - gradientHeight;
       const strength = clamp(wm.gradientStrength / 100, 0, 1);
@@ -1775,6 +1883,7 @@
   }
 
   async function renderWatermarkToCanvas(canvas, record, index, maxEdge) {
+    if (state.watermark.preset === 'kaki-psd') await preloadKakiTemplate();
     const img = await loadImage(record.file);
     const scale = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
     const width = Math.max(1, Math.round(img.naturalWidth * scale));
@@ -1894,6 +2003,7 @@
   }
 
   async function renderCollagePage(canvas, pageIndex, maxEdge) {
+    if (state.watermark.preset === 'kaki-psd') await preloadKakiTemplate();
     const page = collagePages()[pageIndex];
     if (!page) return { width: 1, height: 1 };
     const visible = page.records;
@@ -2202,6 +2312,7 @@
   function readWatermarkControl(control) {
     const key = control.dataset.watermark;
     if (!key) return;
+    if (state.watermark.preset === 'kaki-psd' && key !== 'text') return;
     if (control.type === 'checkbox') state.watermark[key] = control.checked;
     else if (control.type === 'range' || control.type === 'number') state.watermark[key] = numberOr(control.value, WATERMARK_DEFAULTS[key]);
     else {
@@ -2510,6 +2621,7 @@
     syncStageTitle();
     schedulePreview();
     warmCustomFonts();
+    preloadKakiTemplate();
     let onboardingSeen = false;
     try {
       onboardingSeen = localStorage.getItem(ONBOARDING_KEY) === 'seen';

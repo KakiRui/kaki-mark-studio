@@ -6,6 +6,7 @@
 @font-face{font-family:"Kaki Butter Bread";src:url("assets/fonts/butter-bread.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:"Kaki Huiwen Mincho";src:url("assets/fonts/huiwen-mincho.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:"Kaki Love Song";src:url("assets/fonts/y17-love-song-new.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Javacom";src:url("assets/fonts/javacom-regular.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
 :root{
   --paper:#f3f1e9;--paper-deep:#eae6da;--surface:#fbfaf6;--surface-2:#f5f2e9;
   --ink:#26251f;--ink-soft:#666257;--ink-faint:#918b7d;--line:rgba(45,42,33,.13);
@@ -347,6 +348,7 @@ output{color:var(--ink-faint);font-family:var(--mono);font-size:9px;float:right;
 .swatch-tiled{background-image:radial-gradient(var(--preset-preview-dot) 1px,transparent 1px);background-size:9px 9px;font-family:var(--mono);font-size:5.5px;text-shadow:0 1px rgba(255,255,255,.28)}
 .swatch-gradient{background-image:linear-gradient(180deg,transparent 30%,var(--preset-preview-depth) 100%);color:rgba(255,255,255,.96);font-size:6px;align-content:end;padding-bottom:4px;letter-spacing:.7px;text-shadow:0 1px 2px rgba(20,20,20,.28)}
 .swatch-band{background-image:linear-gradient(180deg,transparent 60%,var(--preset-preview-depth) 60%);color:rgba(255,255,255,.96);font-size:6px;align-content:end;padding-bottom:4px;font-family:var(--mono);text-shadow:0 1px 2px rgba(20,20,20,.28)}
+.swatch-kaki-psd{background-color:var(--preset-preview-base);background-image:url("assets/presets/kaki-heart-preview.png?v=2");background-position:center;background-size:cover;color:transparent;font-size:0;transform:none}
 .preset-card span:last-child{display:flex;flex-direction:column;gap:3px;min-width:0}
 .preset-card strong{font-size:9.5px;font-weight:650;white-space:nowrap}
 .preset-card small{font-size:8px;color:var(--ink-faint);white-space:nowrap}
@@ -356,6 +358,7 @@ select{background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50
 input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--ink-soft);box-shadow:0 0 0 3px var(--accent-ring)}
 input[type=text]::placeholder{color:var(--placeholder)}
 .field-hint{margin:5px 0 0;color:var(--ink-faint);font-size:9px;line-height:1.5}
+.preset-lock-note{padding:7px 8px;border-left:2px solid var(--accent);background:var(--surface-2);color:var(--ink-soft)}
 .compact-grid{gap:14px}
 .two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
 .two-up>div,.control-group,.mode-panel,.preset-grid,.control-panel,.stage{min-width:0}
