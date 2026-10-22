@@ -13,7 +13,7 @@ A local-first batch image marking workspace for artists, photographers and small
   - **Small watermark** — import a logo or signature with nine-point placement, offsets, scale, rotation, shadow, and cell-or-sheet compositing.
 - **Live preview** — edits are reflected immediately, with no server round-trip.
 - **Theme picker** — switch between the original warm-paper palette, Frost Indigo, Pine Smoke, Haitang, Lotus, and the graphite monochrome Dianmo palette. First-time visitors start with the original palette; saved selections are remembered. Each theme uses a readable preset preview background and a high-contrast themed selection ring.
-- **Independent quick presets** — signature presets and the full-screen tiled preset keep separate settings, can run together, and each can be cleared by clicking its active card again. The bundled **爱心预览** preset composites the supplied signature-free artwork, including its decorative footer copy, with a separate editable Javacom signature layer. The original 109° shadow and right-bottom baseline stay fixed while only the signature text is editable.
+- **Independent quick presets** — signature presets and the full-screen tiled preset keep separate settings, can run together, and each can be cleared by clicking its active card again. The bundled **爱心预览** preset keeps its Javacom typography and artwork isolated from other presets, while only its signature text is editable.
 - **Fine-grained controls** — shadow distances and text outline strength use fine steps and scale proportionally with the rendered canvas.
 - **Bundled display fonts** — self-hosted Latin and Chinese display families are grouped by language in the font menus. Large Chinese font files load only after the user selects them.
 - **Batch export** — write JPEG or PNG at a locked 2400 px long edge by default, unlock other sizes when needed, download one image, package the set as a ZIP, or load every finished image into an iOS-friendly long-press gallery.
@@ -40,7 +40,7 @@ Then visit `http://localhost:8080`.
 4. Adjust opacity, blend modes, placement, and edge effects in the live preview.
 5. Export the current image or every page as a ZIP.
 
-In collage mode, a full-screen layer set to **before collage** is composited onto every source photograph before the contact sheet is assembled. **After collage** layers cover the finished sheet. Watermark frames and small watermarks can independently target every cell or the finished sheet.
+In collage mode, imported full-screen layers default to **before collage** and are composited onto every source photograph before the contact sheet is assembled. **After collage** layers cover the finished sheet. Watermark frames and small watermarks can independently target every cell or the finished sheet.
 
 Automatic ratio mode groups only consecutive images with similar shapes, so the original import order is always preserved. A later image never jumps backward into an earlier ratio group. Fixed presets and custom width/height ratios use a consistent crop frame.
 

@@ -85,7 +85,7 @@
   const PRESETS = Object.freeze({
     gradient: { opacity: 100, size: 5, stroke: 2, gradientStrength: 100, gradientHeight: 50, font: 'sans' },
     band: { opacity: 100, size: 3.5, stroke: 6, font: 'mono', bandOpacity: 65, bandRightEnabled: true, bandRightMode: 'date' },
-    'kaki-psd': { text: '@Kaki', opacity: 100, size: 6.2165, position: 'br', rotate: -6, font: 'javacom', color: '#000000', strokeColor: '#ffffff', stroke: 0 }
+    'kaki-psd': { text: '@Kaki' }
   });
 
   // Derived from the 2000 × 2000 PSD's @Kaki text layer and its group effects.
@@ -103,17 +103,6 @@
     shadowDistance: 4 / 2000,
     shadowBlur: 4 / 2000,
     shadowOpacity: 0.45
-  });
-
-  const KAKI_PSD_FIXED_SETTINGS = Object.freeze({
-    opacity: 100,
-    size: KAKI_PSD_SIGNATURE.fontSizePercent,
-    position: 'br',
-    rotate: KAKI_PSD_SIGNATURE.rotate,
-    font: KAKI_PSD_SIGNATURE.font,
-    color: KAKI_PSD_SIGNATURE.color,
-    strokeColor: KAKI_PSD_SIGNATURE.strokeColor,
-    stroke: 0
   });
 
   const PRESET_ALIASES = { corner: 'none', center: 'gradient', double: 'none' };
@@ -641,7 +630,7 @@
     wm.gradientHeight = clamp(numberOr(wm.gradientHeight, WATERMARK_DEFAULTS.gradientHeight), 15, 75);
     if (PRESET_ALIASES[wm.preset]) wm.preset = PRESET_ALIASES[wm.preset];
     if (wm.preset !== 'none' && !PRESETS[wm.preset]) wm.preset = WATERMARK_DEFAULTS.preset;
-    if (wm.preset === 'kaki-psd') Object.assign(wm, KAKI_PSD_FIXED_SETTINGS);
+    if (wm.font === 'javacom') wm.font = WATERMARK_DEFAULTS.font;
     if (!FONT_STACKS[wm.font]) wm.font = WATERMARK_DEFAULTS.font;
     if (!['br','bl','tr','tl','center'].includes(wm.position)) wm.position = WATERMARK_DEFAULTS.position;
     if (!/^#[0-9a-f]{6}$/i.test(wm.color)) wm.color = WATERMARK_DEFAULTS.color;
@@ -764,7 +753,6 @@
     }
     state.watermark.preset = name;
     Object.assign(state.watermark, PRESETS[name]);
-    if (name === 'kaki-psd') state.fullscreenPreset.preset = 'none';
     applyUiFromState();
     el.presetSettingsDetails.open = true;
     persistSettings();
@@ -931,7 +919,7 @@
         opacity: 100,
         blend: 'overlay',
         fit: 'cover',
-        placement: 'after'
+        placement: 'before'
       });
     });
     if (incoming.length > room) toast(`最多保留 ${MAX_FULLSCREEN_LAYERS} 层全屏水印`, 'error');
@@ -1473,6 +1461,7 @@
   function warmCustomFonts() {
     if (!document.fonts) return;
     const fontKeys = new Set(['alfa-slab', 'bebas-neue']);
+    if (state.watermark.preset === 'kaki-psd') fontKeys.add('javacom');
     [state.watermark.font, state.fullscreenPreset.font, state.collage.numberFont].forEach((key) => {
       if (CUSTOM_FONT_FAMILIES[key]) fontKeys.add(key);
     });
