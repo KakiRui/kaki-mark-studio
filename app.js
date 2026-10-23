@@ -2141,7 +2141,8 @@
       const record = item.record;
       const img = await loadImage(record.file);
       ctx.save();
-      roundedRect(ctx, x, y, base.cellW, base.cellH, base.cellW * 0.012);
+      ctx.beginPath();
+      ctx.rect(x, y, base.cellW, base.cellH);
       ctx.clip();
       drawCover(ctx, img, x, y, base.cellW, base.cellH);
       if (state.fullscreenPreset.placement === 'cell') {
@@ -2168,7 +2169,7 @@
           preset: state.watermark.preset,
           dims: { x, y, w: base.cellW, h: base.cellH },
           clip: true,
-          radius: base.cellW * 0.012
+          radius: 0
         });
       }
       const number = state.collage.numberStart + item.fileIndex;
