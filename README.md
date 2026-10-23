@@ -20,7 +20,7 @@ A local-first batch image marking workspace for artists, photographers and small
 - **First-run guide** — an animated three-step introduction appears on the first visit and can be reopened from the header.
 - **Image inspection** — double-click any queued thumbnail to inspect the original image at a larger size; destructive removal requires confirmation.
 - **Number styling** — choose font, color, opacity, outline, shadow, size, and six placement anchors, including a centered-sheet position.
-- **Local and private** — files stay in the browser tab. There is no upload endpoint, account, tracking pixel, or analytics script.
+- **Local and private** — imported works are stored only in this browser with IndexedDB so they survive refreshes. There is no upload endpoint, account, tracking pixel, or analytics script.
 - **Resilient by design** — validated controls, bounded canvas sizes, failed-image handling, object URL cleanup, keyboard navigation, and a responsive mobile layout.
 - **Self-contained dependencies** — JSZip is vendored in this repository, so the core export flow does not depend on a third-party CDN.
 
@@ -74,5 +74,5 @@ assets/vendor/jszip.min.js  Local ZIP dependency
 - All processing uses the Canvas API inside the browser.
 - Frame recoloring derives a foreground mask from transparency or image contrast, so a black mark on a white background can be converted to a clean single-color stamp.
 - The export resolution is limited by the selected long edge rather than the source pixel dimensions, avoiding oversized canvases on mobile devices.
-- Settings persist in `localStorage`; imported images are intentionally not persisted after the tab is closed.
+- Settings persist in `localStorage`; imported images persist locally in IndexedDB until the queue is cleared or browser site data is removed.
 - ZIP compression is set to `STORE` because JPEG data is already compressed, which makes packaging faster without increasing file size in a meaningful way.

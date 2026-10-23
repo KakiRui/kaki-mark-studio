@@ -5,6 +5,8 @@
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
   const STORAGE_KEY = 'kaki-mark-studio-settings-v7';
+  const IMAGE_DB_NAME = 'kaki-mark-studio-images-v1';
+  const IMAGE_STORE_NAME = 'files';
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const THEME_KEY = 'kaki-mark-studio-theme-v5';
   const PREVIEW_EDGE = 1500;
@@ -226,6 +228,9 @@
   let currentTheme = 'original';
   let kakiTemplateImage = null;
   let kakiTemplatePromise = null;
+  let imageDbPromise = null;
+  let persistQueue = Promise.resolve();
+  let storageWarningShown = false;
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const numberOr = (value, fallback) => {
@@ -259,6 +264,121 @@
     const target = keys.reduce((node, key) => node[key], object);
     target[last] = value;
   };
+
+  function openImageDb() {
+    if (imageDbPromise) return imageDbPromise;
+    imageDbPromise = new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) {
+        resolve(null);
+        return;
+      }
+      const request = indexedDB.open(IMAGE_DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
+          db.createObjectStore(IMAGE_STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        db.onversionchange = () => db.close();
+        resolve(db);
+      };
+      request.onerror = () => reject(request.error || new Error('作品缓存无法打开'));
+    });
+    return imageDbPromise;
+  }
+
+  function fileSnapshot() {
+    return state.files.map((record, order) => ({
+      id: record.id,
+      order,
+      name: record.name,
+      width: record.width,
+      height: record.height,
+      type: record.file.type,
+      lastModified: record.file.lastModified || Date.now(),
+      blob: record.file
+    }));
+  }
+
+  function persistImportedFiles() {
+    const snapshot = fileSnapshot();
+    persistQueue = persistQueue
+      .catch(() => null)
+      .then(async () => {
+        const db = await openImageDb();
+        if (!db) return;
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(IMAGE_STORE_NAME, 'readwrite');
+          const store = transaction.objectStore(IMAGE_STORE_NAME);
+          store.clear();
+          snapshot.forEach((record) => store.put(record));
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error || new Error('作品缓存写入失败'));
+          transaction.onabort = () => reject(transaction.error || new Error('作品缓存写入中止'));
+        });
+      })
+      .catch((error) => {
+        console.warn(error);
+        if (!storageWarningShown) {
+          storageWarningShown = true;
+          toast('浏览器本地空间不足，作品可能无法在刷新后恢复', 'error');
+        }
+      });
+    return persistQueue;
+  }
+
+  function clearStoredFiles() {
+    persistQueue = persistQueue
+      .catch(() => null)
+      .then(async () => {
+        const db = await openImageDb();
+        if (!db) return;
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(IMAGE_STORE_NAME, 'readwrite');
+          transaction.objectStore(IMAGE_STORE_NAME).clear();
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error || new Error('作品缓存清理失败'));
+        });
+      })
+      .catch((error) => console.warn(error));
+    return persistQueue;
+  }
+
+  async function restoreImportedFiles() {
+    try {
+      const db = await openImageDb();
+      if (!db) return 0;
+      const records = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(IMAGE_STORE_NAME, 'readonly');
+        const request = transaction.objectStore(IMAGE_STORE_NAME).getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error || new Error('作品缓存读取失败'));
+      });
+      const restored = records
+        .filter((record) => record?.blob instanceof Blob)
+        .sort((a, b) => Number(a.order) - Number(b.order))
+        .map((record) => {
+          const file = record.blob instanceof File
+            ? record.blob
+            : new File([record.blob], record.name, { type: record.type, lastModified: record.lastModified });
+          return {
+            id: record.id,
+            file,
+            name: record.name,
+            width: Math.max(1, Number(record.width) || 1),
+            height: Math.max(1, Number(record.height) || 1),
+            thumbUrl: URL.createObjectURL(file)
+          };
+        });
+      state.files.push(...restored);
+      return restored.length;
+    } catch (error) {
+      console.warn(error);
+      return 0;
+    }
+  }
 
   function cacheEls() {
     const ids = [
@@ -1169,6 +1289,7 @@
     syncStageTitle();
     updateActionAvailability();
     schedulePreview();
+    if (loaded.length) await persistImportedFiles();
     el.dropZone.classList.remove('is-loading');
     el.dropZone.removeAttribute('aria-busy');
 
@@ -1186,6 +1307,7 @@
     syncStageTitle();
     updateActionAvailability();
     schedulePreview();
+    persistImportedFiles();
   }
 
   function clearFiles() {
@@ -1198,6 +1320,7 @@
     syncStageTitle();
     updateActionAvailability();
     schedulePreview();
+    clearStoredFiles();
     toast('作品队列已清空');
   }
 
@@ -1305,6 +1428,7 @@
       state.files.splice(to, 0, moved);
       renderQueue();
       schedulePreview();
+      persistImportedFiles();
     });
   }
 
@@ -2599,11 +2723,12 @@
     });
   }
 
-  function init() {
+  async function init() {
     cacheEls();
     restoreTheme();
     restoreSettings();
     applyUiFromState();
+    const restoredCount = await restoreImportedFiles();
     bindControls();
     renderQueue();
     updateActionAvailability();
@@ -2611,6 +2736,7 @@
     schedulePreview();
     warmCustomFonts();
     preloadKakiTemplate();
+    if (restoredCount > 0) toast(`已恢复上次导入的 ${restoredCount} 张作品`);
     let onboardingSeen = false;
     try {
       onboardingSeen = localStorage.getItem(ONBOARDING_KEY) === 'seen';
