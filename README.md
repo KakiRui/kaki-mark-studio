@@ -9,8 +9,9 @@ A local-first batch image marking workspace for artists, photographers and small
   - **Contact-sheet collage** — automatic ratio grouping, fixed or custom ratios, configurable rows and columns, and numbered occlusion masks.
 - **Three compositing modules shared by both workspaces**
   - **Full-screen watermark** — import up to eight transparent textures, with per-layer opacity, blend mode, fit mode, and before/after-collage placement.
-  - **Watermark frame** — import a frame, replace its ink color while preserving the detected foreground, add a shadow, and choose whether it is applied to each cell or the finished sheet.
-  - **Small watermark** — import a logo or signature with nine-point placement, offsets, scale, rotation, shadow, and cell-or-sheet compositing.
+  - **Watermark frame** — import up to eight frames, select and edit each layer independently, recolor its ink, add a shadow, and choose whether it applies to each cell or the finished sheet.
+  - **Small watermark** — import up to eight logos or signatures, with per-layer nine-point placement, offsets, scale, rotation, shadow, and cell-or-sheet compositing.
+- **Saved watermark assets** — each compositing module can save its current imported images and layer settings locally, then restore them after a refresh.
 - **Live preview** — edits are reflected immediately, with no server round-trip.
 - **Theme picker** — switch between the original warm-paper palette, Frost Indigo, Pine Smoke, Haitang, Lotus, and the graphite monochrome Dianmo palette. First-time visitors start with the original palette; saved selections are remembered. Each theme uses a readable preset preview background and a high-contrast themed selection ring.
 - **Independent quick presets** — signature presets and the full-screen tiled preset keep separate settings, can run together, and each can be cleared by clicking its active card again. The bundled **爱心预览** preset keeps its Javacom typography and artwork isolated from other presets, while only its signature text is editable.
@@ -20,7 +21,7 @@ A local-first batch image marking workspace for artists, photographers and small
 - **First-run guide** — an animated three-step introduction appears on the first visit and can be reopened from the header.
 - **Image inspection** — double-click any queued thumbnail to inspect the original image at a larger size; destructive removal requires confirmation.
 - **Number styling** — choose font, color, opacity, outline, shadow, size, and six placement anchors, including a centered-sheet position.
-- **Local and private** — imported works are stored only in this browser with IndexedDB so they survive refreshes. There is no upload endpoint, account, tracking pixel, or analytics script.
+- **Local and private** — imported works and explicitly saved watermark assets are stored only in this browser with IndexedDB so they survive refreshes. There is no upload endpoint, account, tracking pixel, or analytics script.
 - **Resilient by design** — validated controls, bounded canvas sizes, failed-image handling, object URL cleanup, keyboard navigation, and a responsive mobile layout.
 - **Self-contained dependencies** — JSZip is vendored in this repository, so the core export flow does not depend on a third-party CDN.
 
@@ -74,5 +75,5 @@ assets/vendor/jszip.min.js  Local ZIP dependency
 - All processing uses the Canvas API inside the browser.
 - Frame recoloring derives a foreground mask from transparency or image contrast, so a black mark on a white background can be converted to a clean single-color stamp.
 - The export resolution is limited by the selected long edge rather than the source pixel dimensions, avoiding oversized canvases on mobile devices.
-- Settings persist in `localStorage`; imported images persist locally in IndexedDB until the queue is cleared or browser site data is removed.
+- Settings persist in `localStorage`; imported work files persist locally in IndexedDB. Full-screen, frame, and small-watermark assets are saved only when their **保存当前导入** button is used, and remain available until replaced with an empty save or browser site data is removed.
 - ZIP compression is set to `STORE` because JPEG data is already compressed, which makes packaging faster without increasing file size in a meaningful way.

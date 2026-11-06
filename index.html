@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f3f1e9">
   <meta name="description" content="Kaki Mark Studio：在浏览器本地批量添加图片水印、编号并导出。图片不会上传。">
   <title>Kaki Mark Studio · 批量图片水印</title>
-  <link rel="stylesheet" href="styles.css?v=kaki-psd-9">
+  <link rel="stylesheet" href="styles.css?v=kaki-marks-10">
 </head>
 <body>
   <header class="topbar">
@@ -400,6 +400,9 @@
                 <button class="button secondary compact" id="addFullscreenBtn" type="button">导入全屏水印</button>
               </div>
               <div class="layer-list" id="fullscreenList"></div>
+              <div class="module-save-row">
+                <button class="button secondary compact" id="fullscreenSaveBtn" type="button">保存当前导入</button>
+              </div>
             </div>
           </details>
 
@@ -409,17 +412,14 @@
               <b id="frameStatus">未导入</b>
             </summary>
             <div class="module-body">
-              <input type="file" id="frameInput" accept="image/*" hidden>
+              <input type="file" id="frameInput" accept="image/*" multiple hidden>
+              <div class="layer-list" id="frameList"></div>
               <div class="asset-empty" id="frameEmpty">
-                <div><strong>还没有水印框</strong><span>PNG 透明底效果最好</span></div>
+                <div><strong id="frameEmptyTitle">还没有水印框</strong><span id="frameEmptyHint">PNG 透明底效果最好 · 最多 8 张</span></div>
                 <button class="button secondary compact" id="frameChooseBtn" type="button">导入水印框</button>
               </div>
               <div id="frameEditor" hidden>
-                <div class="asset-summary">
-                  <span class="asset-thumb"><img id="frameThumb" alt=""></span>
-                  <div><strong id="frameName">水印框</strong><span>已作为最上层画框合成</span></div>
-                  <button class="text-button danger" id="frameRemoveBtn" type="button">移除</button>
-                </div>
+                <div class="active-layer-label" id="frameActiveLabel"></div>
                 <div class="field-block collage-mark-placement" hidden>
                   <label for="framePlacement">目录拼图应用位置</label>
                   <select id="framePlacement" data-mark="frame.placement">
@@ -501,6 +501,9 @@
 
                 </div>
               </div>
+              <div class="module-save-row">
+                <button class="button secondary compact" id="frameSaveBtn" type="button">保存当前导入</button>
+              </div>
             </div>
           </details>
 
@@ -510,17 +513,14 @@
               <b id="smallStatus">未导入</b>
             </summary>
             <div class="module-body">
-              <input type="file" id="smallInput" accept="image/*" hidden>
+              <input type="file" id="smallInput" accept="image/*" multiple hidden>
+              <div class="layer-list" id="smallList"></div>
               <div class="asset-empty" id="smallEmpty">
-                <div><strong>还没有小水印</strong><span>可以导入透明底 Logo</span></div>
+                <div><strong id="smallEmptyTitle">还没有小水印</strong><span id="smallEmptyHint">可以导入透明底 Logo · 最多 8 张</span></div>
                 <button class="button secondary compact" id="smallChooseBtn" type="button">导入小水印</button>
               </div>
               <div id="smallEditor" hidden>
-                <div class="asset-summary">
-                  <span class="asset-thumb"><img id="smallThumb" alt=""></span>
-                  <div><strong id="smallName">小水印</strong><span>已作为独立角标合成</span></div>
-                  <button class="text-button danger" id="smallRemoveBtn" type="button">移除</button>
-                </div>
+                <div class="active-layer-label" id="smallActiveLabel"></div>
                 <div class="field-block collage-mark-placement" hidden>
                   <label for="smallPlacement">目录拼图应用位置</label>
                   <select id="smallPlacement" data-mark="small.placement">
@@ -623,6 +623,9 @@
                   </div>
 
                 </div>
+              </div>
+              <div class="module-save-row">
+                <button class="button secondary compact" id="smallSaveBtn" type="button">保存当前导入</button>
               </div>
             </div>
           </details>
@@ -947,6 +950,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
   <script src="assets/vendor/jszip.min.js"></script>
-  <script src="app.js?v=kaki-psd-9"></script>
+  <script src="app.js?v=kaki-marks-10"></script>
 </body>
 </html>

@@ -3,10 +3,13 @@
 
   const MAX_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
+  const MAX_COMPOSITE_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
   const STORAGE_KEY = 'kaki-mark-studio-settings-v7';
   const IMAGE_DB_NAME = 'kaki-mark-studio-images-v1';
+  const IMAGE_DB_VERSION = 2;
   const IMAGE_STORE_NAME = 'files';
+  const WATERMARK_STORE_NAME = 'watermarks';
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const THEME_KEY = 'kaki-mark-studio-theme-v5';
   const PREVIEW_EDGE = 1500;
@@ -212,9 +215,10 @@
     },
     assets: {
       fullscreen: [],
-      frame: null,
-      small: null
+      frame: [],
+      small: []
     },
+    selectedMarkLayers: { frame: null, small: null },
     export: { ...EXPORT_DEFAULTS },
     previewUrls: [],
     busy: false,
@@ -230,6 +234,7 @@
   let kakiTemplatePromise = null;
   let imageDbPromise = null;
   let persistQueue = Promise.resolve();
+  let watermarkPersistQueue = Promise.resolve();
   let storageWarningShown = false;
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -272,11 +277,14 @@
         resolve(null);
         return;
       }
-      const request = indexedDB.open(IMAGE_DB_NAME, 1);
+      const request = indexedDB.open(IMAGE_DB_NAME, IMAGE_DB_VERSION);
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
           db.createObjectStore(IMAGE_STORE_NAME, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(WATERMARK_STORE_NAME)) {
+          db.createObjectStore(WATERMARK_STORE_NAME, { keyPath: 'id' });
         }
       };
       request.onsuccess = () => {
@@ -380,6 +388,144 @@
     }
   }
 
+  function compositeLayerList(type) {
+    return type === 'fullscreen' ? state.assets.fullscreen : state.assets[type];
+  }
+
+  function compositeLayerSettings(layer, type) {
+    return type === 'fullscreen'
+      ? {
+          opacity: layer.opacity,
+          blend: layer.blend,
+          fit: layer.fit,
+          placement: layer.placement
+        }
+      : layer.settings;
+  }
+
+  function normalizeCompositeSettings(type, raw = {}) {
+    if (type === 'fullscreen') {
+      return {
+        opacity: clamp(numberOr(raw.opacity, 100), 0, 100),
+        blend: FULLSCREEN_BLENDS.includes(raw.blend) ? raw.blend : 'overlay',
+        fit: ['cover', 'contain', 'tile'].includes(raw.fit) ? raw.fit : 'cover',
+        placement: raw.placement === 'after' ? 'after' : 'before'
+      };
+    }
+    const isFrame = type === 'frame';
+    const defaults = isFrame ? FRAME_DEFAULTS : SMALL_DEFAULTS;
+    const settings = { ...defaults, ...raw };
+    sanitizeMarkSettings(settings, defaults, isFrame ? {
+      scale: [10, 120], opacity: [5, 100], x: [-50, 50], y: [-50, 50],
+      shadowOpacity: [0, 100], shadowBlur: [0, 120], shadowX: [-40, 40], shadowY: [-40, 40]
+    } : {
+      scale: [3, 70], opacity: [5, 100], x: [-45, 45], y: [-45, 45], rotate: [-45, 45],
+      shadowOpacity: [0, 100], shadowBlur: [0, 60], shadowX: [-20, 20], shadowY: [-20, 20]
+    });
+    if (!isFrame && !['tl','tc','tr','ml','mc','mr','bl','bc','br'].includes(settings.anchor)) {
+      settings.anchor = defaults.anchor;
+    }
+    if (!['cell','sheet'].includes(settings.placement)) settings.placement = defaults.placement;
+    return settings;
+  }
+
+  async function savedAssetRecord(item) {
+    if (!(item?.blob instanceof Blob)) return null;
+    const file = item.blob instanceof File
+      ? item.blob
+      : new File([item.blob], item.name || 'watermark.png', {
+          type: item.type || item.blob.type,
+          lastModified: item.lastModified || Date.now()
+        });
+    const record = await createAssetRecord(file);
+    record.id = item.id || record.id;
+    return record;
+  }
+
+  async function saveWatermarkModule(type) {
+    const layers = compositeLayerList(type);
+    const snapshots = layers.map((layer) => {
+      const settings = compositeLayerSettings(layer, type);
+      return {
+        id: layer.id,
+        name: layer.record.name,
+        width: layer.record.width,
+        height: layer.record.height,
+        type: layer.record.file.type,
+        lastModified: layer.record.file.lastModified || Date.now(),
+        blob: layer.record.file,
+        settings: { ...settings }
+      };
+    });
+    watermarkPersistQueue = watermarkPersistQueue
+      .catch(() => null)
+      .then(async () => {
+        const db = await openImageDb();
+        if (!db) throw new Error('浏览器不支持本地水印缓存');
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(WATERMARK_STORE_NAME, 'readwrite');
+          transaction.objectStore(WATERMARK_STORE_NAME).put({
+            id: type,
+            type,
+            savedAt: Date.now(),
+            layers: snapshots
+          });
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error || new Error('水印缓存写入失败'));
+          transaction.onabort = () => reject(transaction.error || new Error('水印缓存写入中止'));
+        });
+      });
+    try {
+      await watermarkPersistQueue;
+      const label = type === 'fullscreen' ? '全屏水印' : type === 'frame' ? '水印框' : '小水印';
+      toast(snapshots.length ? `已保存 ${snapshots.length} 张${label}` : `已清除${label}缓存`);
+    } catch (error) {
+      console.warn(error);
+      toast('保存水印缓存失败，可能是浏览器存储空间不足', 'error');
+    }
+  }
+
+  async function restoreWatermarkAssets() {
+    try {
+      const db = await openImageDb();
+      if (!db) return 0;
+      const records = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(WATERMARK_STORE_NAME, 'readonly');
+        const request = transaction.objectStore(WATERMARK_STORE_NAME).getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error || new Error('水印缓存读取失败'));
+      });
+      let restoredCount = 0;
+      for (const saved of records) {
+        const type = saved?.type;
+        if (!['fullscreen', 'frame', 'small'].includes(type)) continue;
+        const nextLayers = [];
+        for (const item of Array.isArray(saved.layers) ? saved.layers : []) {
+          try {
+            const record = await savedAssetRecord(item);
+            if (!record) continue;
+            const settings = normalizeCompositeSettings(type, item.settings);
+            nextLayers.push(type === 'fullscreen'
+              ? { id: record.id, record, ...settings }
+              : { id: record.id, record, settings });
+          } catch (error) {
+            console.warn(error);
+          }
+        }
+        compositeLayerList(type).splice(0, compositeLayerList(type).length, ...nextLayers);
+        if (type !== 'fullscreen' && nextLayers.length) {
+          state.selectedMarkLayers[type] = nextLayers[0].id;
+          state.marks[type] = nextLayers[0].settings;
+        }
+        restoredCount += nextLayers.length;
+      }
+      return restoredCount;
+    } catch (error) {
+      console.warn(error);
+      return 0;
+    }
+  }
+
   function cacheEls() {
     const ids = [
       'resetSettingsBtn','dropZone','fileInput','queueView','queueStrip','libraryMeta',
@@ -409,7 +555,7 @@
       'exportAllLabel','progressWrap','progressText','progressPercent','progressBar','toastRegion',
       'previewAllBtn','resultGallery','resultGrid',
       'numberOptions','fullscreenCount','fullscreenEmpty','fullscreenEmptyTitle','fullscreenEmptyHint',
-      'fullscreenInput','addFullscreenBtn','fullscreenList','fullscreenPresetDetails',
+      'fullscreenInput','addFullscreenBtn','fullscreenList','fullscreenSaveBtn','fullscreenPresetDetails',
       'fullscreenPresetText','fullscreenPresetOpacity','fullscreenPresetOpacityValue',
       'fullscreenPresetSize','fullscreenPresetSizeValue','fullscreenPresetRotate',
       'fullscreenPresetRotateValue','fullscreenPresetGap','fullscreenPresetGapValue',
@@ -417,10 +563,12 @@
       'fullscreenPresetColor','fullscreenPresetStrokeColor','fullscreenPresetStroke',
       'fullscreenPresetStrokeValue',
       'signaturePresetWorkspace','presetSettingsDetails',
-      'frameInput','frameChooseBtn','frameEmpty','frameEditor','frameThumb',
-      'frameName','frameRemoveBtn','frameTintCombo','frameShadowControls',
-      'frameStatus','smallInput','smallChooseBtn','smallEmpty','smallEditor',
-      'smallThumb','smallName','smallRemoveBtn','smallTintCombo','smallShadowControls',
+      'frameInput','frameChooseBtn','frameEmpty','frameEmptyTitle','frameEmptyHint',
+      'frameList','frameEditor','frameActiveLabel','frameSaveBtn',
+      'frameTintCombo','frameShadowControls','frameStatus',
+      'smallInput','smallChooseBtn','smallEmpty','smallEmptyTitle','smallEmptyHint',
+      'smallList','smallEditor','smallActiveLabel','smallSaveBtn',
+      'smallTintCombo','smallShadowControls',
       'smallStatus','showWelcomeBtn','welcomeOverlay','welcomeStartBtn',
       'imagePreviewOverlay','imagePreviewImg','imagePreviewTitle','imagePreviewMeta','imagePreviewCloseBtn',
       'themePicker','themeToggleBtn','themeToggleLabel','themeMenu'
@@ -551,6 +699,14 @@
     });
   }
 
+  function syncMarkControlsFromState() {
+    el.markControls.forEach((control) => {
+      const value = getPath(state.marks, control.dataset.mark);
+      if (control.type === 'checkbox') control.checked = Boolean(value);
+      else if (value !== undefined) control.value = value;
+    });
+  }
+
   function applyUiFromState() {
     el.watermarkText.value = state.watermark.text;
     el.watermarkSize.value = state.watermark.size;
@@ -654,11 +810,7 @@
     el.fullscreenPresetDetails.hidden = false;
     el.fullscreenPresetDetails.open = state.fullscreenPreset.preset !== 'none';
 
-    el.markControls.forEach((control) => {
-      const value = getPath(state.marks, control.dataset.mark);
-      if (control.type === 'checkbox') control.checked = Boolean(value);
-      else if (value !== undefined) control.value = value;
-    });
+    syncMarkControlsFromState();
 
     syncAllRanges();
     syncStageTitle();
@@ -854,6 +1006,12 @@
       frame: { ...FRAME_DEFAULTS },
       small: { ...SMALL_DEFAULTS }
     };
+    state.assets.frame.forEach((layer) => { layer.settings = { ...FRAME_DEFAULTS }; });
+    state.assets.small.forEach((layer) => { layer.settings = { ...SMALL_DEFAULTS }; });
+    state.marks.frame = state.assets.frame[0]?.settings || { ...FRAME_DEFAULTS };
+    state.marks.small = state.assets.small[0]?.settings || { ...SMALL_DEFAULTS };
+    state.selectedMarkLayers.frame = state.assets.frame[0]?.id || null;
+    state.selectedMarkLayers.small = state.assets.small[0]?.id || null;
     state.export = { ...EXPORT_DEFAULTS };
     applyUiFromState();
     persistSettings();
@@ -995,10 +1153,10 @@
   function releaseAllAssets() {
     state.assets.fullscreen.forEach((layer) => releaseAsset(layer.record));
     state.assets.fullscreen = [];
-    releaseAsset(state.assets.frame);
-    releaseAsset(state.assets.small);
-    state.assets.frame = null;
-    state.assets.small = null;
+    state.assets.frame.forEach((layer) => releaseAsset(layer.record));
+    state.assets.small.forEach((layer) => releaseAsset(layer.record));
+    state.assets.frame = [];
+    state.assets.small = [];
   }
 
   function validAssetFiles(files) {
@@ -1047,18 +1205,40 @@
     schedulePreview();
   }
 
-  async function setSingleAsset(type, file) {
-    if (!file) return;
-    if (!validAssetFiles([file]).length) return;
-    try {
-      const record = await createAssetRecord(file);
-      releaseAsset(state.assets[type]);
-      state.assets[type] = record;
-      renderMarkModules();
-      schedulePreview();
-    } catch (_) {
-      toast(`${file.name}：无法读取`, 'error');
+  async function addCompositeAssets(type, files) {
+    const incoming = validAssetFiles(files);
+    if (!incoming.length) return;
+    const layers = state.assets[type];
+    const room = MAX_COMPOSITE_LAYERS - layers.length;
+    const label = type === 'frame' ? '水印框' : '小水印';
+    if (room <= 0) {
+      toast(`${label}最多 ${MAX_COMPOSITE_LAYERS} 张`, 'error');
+      return;
     }
+    const selected = incoming.slice(0, room);
+    const records = [];
+    for (const file of selected) {
+      try {
+        records.push(await createAssetRecord(file));
+      } catch (_) {
+        toast(`${file.name}：无法读取`, 'error');
+      }
+    }
+    records.forEach((record) => {
+      layers.push({
+        id: record.id,
+        record,
+        settings: { ...state.marks[type] }
+      });
+    });
+    if (!state.selectedMarkLayers[type] && layers.length) {
+      state.selectedMarkLayers[type] = layers[0].id;
+      state.marks[type] = layers[0].settings;
+    }
+    if (incoming.length > room) toast(`最多保留 ${MAX_COMPOSITE_LAYERS} 张${label}`, 'error');
+    renderMarkModules();
+    syncMarkControlsFromState();
+    schedulePreview();
   }
 
   function removeFullscreenAsset(id) {
@@ -1070,11 +1250,81 @@
     schedulePreview();
   }
 
-  function removeSingleAsset(type) {
-    releaseAsset(state.assets[type]);
-    state.assets[type] = null;
+  function removeCompositeAsset(type, id) {
+    const layers = state.assets[type];
+    const index = layers.findIndex((layer) => layer.id === id);
+    if (index < 0) return;
+    releaseAsset(layers[index].record);
+    layers.splice(index, 1);
+    if (state.selectedMarkLayers[type] === id) {
+      const next = layers[0];
+      state.selectedMarkLayers[type] = next?.id || null;
+      if (next) state.marks[type] = next.settings;
+    }
     renderMarkModules();
+    syncMarkControlsFromState();
     schedulePreview();
+  }
+
+  function selectCompositeLayer(type, id) {
+    const layer = state.assets[type].find((item) => item.id === id);
+    if (!layer) return;
+    state.selectedMarkLayers[type] = layer.id;
+    state.marks[type] = layer.settings;
+    renderMarkModules();
+    syncMarkControlsFromState();
+    syncAllRanges();
+    schedulePreview();
+  }
+
+  function renderCompositeLayerList(type) {
+    const layers = state.assets[type];
+    const list = type === 'frame' ? el.frameList : el.smallList;
+    list.innerHTML = '';
+    layers.forEach((layer, index) => {
+      const card = document.createElement('article');
+      card.className = 'layer-card composite-layer-card';
+      if (state.selectedMarkLayers[type] === layer.id) card.classList.add('active');
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `编辑第 ${index + 1} 张${type === 'frame' ? '水印框' : '小水印'} ${layer.record.name}`);
+
+      const head = document.createElement('div');
+      head.className = 'layer-head';
+      const thumb = document.createElement('span');
+      thumb.className = 'layer-thumb';
+      const img = document.createElement('img');
+      img.src = layer.record.thumbUrl;
+      img.alt = '';
+      thumb.appendChild(img);
+      const name = document.createElement('div');
+      name.className = 'layer-name';
+      const title = document.createElement('strong');
+      title.textContent = `第 ${index + 1} 张 · ${layer.record.name}`;
+      const detail = document.createElement('small');
+      detail.textContent = `${layer.record.width} × ${layer.record.height}`;
+      name.append(title, detail);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'layer-remove';
+      remove.title = '移除这一张';
+      remove.setAttribute('aria-label', `移除 ${layer.record.name}`);
+      remove.textContent = '×';
+      remove.addEventListener('click', (event) => {
+        event.stopPropagation();
+        removeCompositeAsset(type, layer.id);
+      });
+      head.append(thumb, name, remove);
+      card.appendChild(head);
+      card.addEventListener('click', () => selectCompositeLayer(type, layer.id));
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectCompositeLayer(type, layer.id);
+        }
+      });
+      list.appendChild(card);
+    });
   }
 
   function renderMarkModules() {
@@ -1084,30 +1334,50 @@
     el.fullscreenEmptyHint.textContent = hasFullscreen
       ? `已导入 ${state.assets.fullscreen.length} / ${MAX_FULLSCREEN_LAYERS} 层`
       : '支持 PNG / WEBP · 最多 8 层';
+    el.addFullscreenBtn.disabled = state.assets.fullscreen.length >= MAX_FULLSCREEN_LAYERS;
 
-    el.frameStatus.textContent = state.assets.frame ? '已导入' : '未导入';
-    el.frameEmpty.hidden = Boolean(state.assets.frame);
-    el.frameEditor.hidden = !state.assets.frame;
-    if (state.assets.frame) {
-      el.frameThumb.src = state.assets.frame.thumbUrl;
-      el.frameThumb.alt = state.assets.frame.name;
-      el.frameName.textContent = state.assets.frame.name;
+    const frameLayers = state.assets.frame;
+    const smallLayers = state.assets.small;
+    const activeFrame = frameLayers.find((layer) => layer.id === state.selectedMarkLayers.frame) || frameLayers[0];
+    const activeSmall = smallLayers.find((layer) => layer.id === state.selectedMarkLayers.small) || smallLayers[0];
+    if (activeFrame) {
+      state.selectedMarkLayers.frame = activeFrame.id;
+      state.marks.frame = activeFrame.settings;
+    }
+    if (activeSmall) {
+      state.selectedMarkLayers.small = activeSmall.id;
+      state.marks.small = activeSmall.settings;
     }
 
-    el.smallStatus.textContent = state.assets.small ? '已导入' : '未导入';
-    el.smallEmpty.hidden = Boolean(state.assets.small);
-    el.smallEditor.hidden = !state.assets.small;
-    if (state.assets.small) {
-      el.smallThumb.src = state.assets.small.thumbUrl;
-      el.smallThumb.alt = state.assets.small.name;
-      el.smallName.textContent = state.assets.small.name;
-    }
+    el.frameStatus.textContent = `${frameLayers.length} 张`;
+    el.frameEmptyTitle.textContent = frameLayers.length ? '继续添加水印框' : '还没有水印框';
+    el.frameEmptyHint.textContent = frameLayers.length
+      ? `已导入 ${frameLayers.length} / ${MAX_COMPOSITE_LAYERS} 张`
+      : `PNG 透明底效果最好 · 最多 ${MAX_COMPOSITE_LAYERS} 张`;
+    el.frameChooseBtn.disabled = frameLayers.length >= MAX_COMPOSITE_LAYERS;
+    el.frameEditor.hidden = !frameLayers.length;
+    el.frameActiveLabel.textContent = activeFrame
+      ? `当前编辑：第 ${frameLayers.indexOf(activeFrame) + 1} 张 · ${activeFrame.record.name}`
+      : '';
+
+    el.smallStatus.textContent = `${smallLayers.length} 张`;
+    el.smallEmptyTitle.textContent = smallLayers.length ? '继续添加小水印' : '还没有小水印';
+    el.smallEmptyHint.textContent = smallLayers.length
+      ? `已导入 ${smallLayers.length} / ${MAX_COMPOSITE_LAYERS} 张`
+      : `可以导入透明底 Logo · 最多 ${MAX_COMPOSITE_LAYERS} 张`;
+    el.smallChooseBtn.disabled = smallLayers.length >= MAX_COMPOSITE_LAYERS;
+    el.smallEditor.hidden = !smallLayers.length;
+    el.smallActiveLabel.textContent = activeSmall
+      ? `当前编辑：第 ${smallLayers.indexOf(activeSmall) + 1} 张 · ${activeSmall.record.name}`
+      : '';
 
     el.collageMarkPlacements.forEach((node) => {
       node.hidden = state.mode !== 'collage';
     });
     updateEffectVisibility();
     renderFullscreenList();
+    renderCompositeLayerList('frame');
+    renderCompositeLayerList('small');
   }
 
   function updateEffectVisibility() {
@@ -1983,8 +2253,12 @@
   }
 
   function drawImportedMarks(ctx, boxW, boxH) {
-    drawCompositeAsset(ctx, state.assets.frame?.image, boxW, boxH, state.marks.frame, 'frame');
-    drawCompositeAsset(ctx, state.assets.small?.image, boxW, boxH, state.marks.small, 'small');
+    state.assets.frame.forEach((layer) => {
+      drawCompositeAsset(ctx, layer.record.image, boxW, boxH, layer.settings, 'frame');
+    });
+    state.assets.small.forEach((layer) => {
+      drawCompositeAsset(ctx, layer.record.image, boxW, boxH, layer.settings, 'small');
+    });
   }
 
   function watermarkLongEdge(img) {
@@ -2152,18 +2426,20 @@
         ctx.restore();
       }
       drawFullscreenLayers(ctx, x, y, base.cellW, base.cellH, 'before');
-      if (state.marks.frame.placement === 'cell') {
+      state.assets.frame.forEach((layer) => {
+        if (layer.settings.placement !== 'cell') return;
         ctx.save();
         ctx.translate(x, y);
-        drawCompositeAsset(ctx, state.assets.frame?.image, base.cellW, base.cellH, state.marks.frame, 'frame');
+        drawCompositeAsset(ctx, layer.record.image, base.cellW, base.cellH, layer.settings, 'frame');
         ctx.restore();
-      }
-      if (state.marks.small.placement === 'cell') {
+      });
+      state.assets.small.forEach((layer) => {
+        if (layer.settings.placement !== 'cell') return;
         ctx.save();
         ctx.translate(x, y);
-        drawCompositeAsset(ctx, state.assets.small?.image, base.cellW, base.cellH, state.marks.small, 'small');
+        drawCompositeAsset(ctx, layer.record.image, base.cellW, base.cellH, layer.settings, 'small');
         ctx.restore();
-      }
+      });
       if (state.watermark.preset !== 'none') {
         drawWatermark(ctx, base.cellW, base.cellH, item.fileIndex, {
           preset: state.watermark.preset,
@@ -2184,12 +2460,16 @@
       drawFullscreenPreset(ctx, base.width, base.height, visible[0]?.fileIndex || 0);
     }
     drawFullscreenLayers(ctx, 0, 0, base.width, base.height, 'after');
-    if (state.marks.frame.placement === 'sheet') {
-      drawCompositeAsset(ctx, state.assets.frame?.image, base.width, base.height, state.marks.frame, 'frame');
-    }
-    if (state.marks.small.placement === 'sheet') {
-      drawCompositeAsset(ctx, state.assets.small?.image, base.width, base.height, state.marks.small, 'small');
-    }
+    state.assets.frame.forEach((layer) => {
+      if (layer.settings.placement === 'sheet') {
+        drawCompositeAsset(ctx, layer.record.image, base.width, base.height, layer.settings, 'frame');
+      }
+    });
+    state.assets.small.forEach((layer) => {
+      if (layer.settings.placement === 'sheet') {
+        drawCompositeAsset(ctx, layer.record.image, base.width, base.height, layer.settings, 'small');
+      }
+    });
     ctx.restore();
     return { width, height };
   }
@@ -2545,8 +2825,9 @@
     el.frameChooseBtn.addEventListener('click', () => el.frameInput.click());
     el.smallChooseBtn.addEventListener('click', () => el.smallInput.click());
     el.addFullscreenBtn.addEventListener('click', () => el.fullscreenInput.click());
-    el.frameRemoveBtn.addEventListener('click', () => removeSingleAsset('frame'));
-    el.smallRemoveBtn.addEventListener('click', () => removeSingleAsset('small'));
+    el.fullscreenSaveBtn.addEventListener('click', () => saveWatermarkModule('fullscreen'));
+    el.frameSaveBtn.addEventListener('click', () => saveWatermarkModule('frame'));
+    el.smallSaveBtn.addEventListener('click', () => saveWatermarkModule('small'));
 
     el.fullscreenInput.addEventListener('change', async (event) => {
       const files = Array.from(event.target.files || []);
@@ -2554,14 +2835,14 @@
       await addFullscreenAssets(files);
     });
     el.frameInput.addEventListener('change', async (event) => {
-      const file = event.target.files?.[0];
+      const files = Array.from(event.target.files || []);
       event.target.value = '';
-      await setSingleAsset('frame', file);
+      await addCompositeAssets('frame', files);
     });
     el.smallInput.addEventListener('change', async (event) => {
-      const file = event.target.files?.[0];
+      const files = Array.from(event.target.files || []);
       event.target.value = '';
-      await setSingleAsset('small', file);
+      await addCompositeAssets('small', files);
     });
 
     el.modeTabs.forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
@@ -2728,8 +3009,9 @@
     cacheEls();
     restoreTheme();
     restoreSettings();
-    applyUiFromState();
     const restoredCount = await restoreImportedFiles();
+    const restoredWatermarks = await restoreWatermarkAssets();
+    applyUiFromState();
     bindControls();
     renderQueue();
     updateActionAvailability();
@@ -2738,6 +3020,7 @@
     warmCustomFonts();
     preloadKakiTemplate();
     if (restoredCount > 0) toast(`已恢复上次导入的 ${restoredCount} 张作品`);
+    if (restoredWatermarks > 0) toast(`已恢复保存的 ${restoredWatermarks} 张水印素材`);
     let onboardingSeen = false;
     try {
       onboardingSeen = localStorage.getItem(ONBOARDING_KEY) === 'seen';
