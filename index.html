@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f3f1e9">
   <meta name="description" content="Kaki Mark Studio：在浏览器本地批量添加图片水印、编号并导出。图片不会上传。">
   <title>Kaki Mark Studio · 批量图片水印</title>
-  <link rel="stylesheet" href="styles.css?v=kaki-marks-11">
+  <link rel="stylesheet" href="styles.css?v=kaki-marks-1-12">
 </head>
 <body>
   <header class="topbar">
@@ -401,7 +401,11 @@
               </div>
               <div class="layer-list" id="fullscreenList"></div>
               <div class="module-save-row">
-                <button class="button secondary compact" id="fullscreenSaveBtn" type="button">保存当前导入</button>
+                <button class="module-save-button" id="fullscreenSaveBtn" type="button" title="保存全屏水印图片与当前参数">
+                  <span class="module-save-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/></svg></span>
+                  <span class="module-save-copy"><strong>保存当前导入</strong><small>缓存图片与当前参数</small></span>
+                  <span class="module-save-badge">LOCAL</span>
+                </button>
               </div>
             </div>
           </details>
@@ -502,7 +506,11 @@
                 </div>
               </div>
               <div class="module-save-row">
-                <button class="button secondary compact" id="frameSaveBtn" type="button">保存当前导入</button>
+                <button class="module-save-button" id="frameSaveBtn" type="button" title="保存水印框图片与当前参数">
+                  <span class="module-save-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/></svg></span>
+                  <span class="module-save-copy"><strong>保存当前导入</strong><small>缓存图片与当前参数</small></span>
+                  <span class="module-save-badge">LOCAL</span>
+                </button>
               </div>
             </div>
           </details>
@@ -625,7 +633,11 @@
                 </div>
               </div>
               <div class="module-save-row">
-                <button class="button secondary compact" id="smallSaveBtn" type="button">保存当前导入</button>
+                <button class="module-save-button" id="smallSaveBtn" type="button" title="保存小水印图片与当前参数">
+                  <span class="module-save-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/></svg></span>
+                  <span class="module-save-copy"><strong>保存当前导入</strong><small>缓存图片与当前参数</small></span>
+                  <span class="module-save-badge">LOCAL</span>
+                </button>
               </div>
             </div>
           </details>
@@ -910,7 +922,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>Kaki Mark Studio <b>01</b></span>
+      <span>Kaki Mark Studio <b>v1.12</b></span>
       <p>浏览器本地处理 · 不上传图片 · 不追踪数据</p>
       <span>Built for makers.</span>
     </footer>
@@ -950,6 +962,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
   <script src="assets/vendor/jszip.min.js"></script>
-  <script src="app.js?v=kaki-marks-11"></script>
+  <script src="app.js?v=kaki-marks-1-12"></script>
 </body>
 </html>

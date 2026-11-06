@@ -502,6 +502,16 @@
       await watermarkPersistQueue;
       const label = type === 'fullscreen' ? '全屏水印' : type === 'frame' ? '水印框' : '小水印';
       toast(snapshots.length ? `已保存 ${snapshots.length} 张${label}` : `已清除${label}缓存`);
+      const button = type === 'fullscreen' ? el.fullscreenSaveBtn : type === 'frame' ? el.frameSaveBtn : el.smallSaveBtn;
+      const badge = button?.querySelector('.module-save-badge');
+      if (button && badge) {
+        button.classList.add('is-saved');
+        badge.textContent = snapshots.length ? '已保存' : '已清除';
+        window.setTimeout(() => {
+          button.classList.remove('is-saved');
+          badge.textContent = 'LOCAL';
+        }, 1800);
+      }
     } catch (error) {
       console.warn(error);
       toast('保存水印缓存失败，可能是浏览器存储空间不足', 'error');
