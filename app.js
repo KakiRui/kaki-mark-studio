@@ -7,8 +7,9 @@
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
   const STORAGE_KEY = 'kaki-mark-studio-settings-v7';
   const IMAGE_DB_NAME = 'kaki-mark-studio-images-v1';
-  const IMAGE_DB_VERSION = 2;
+  const IMAGE_DB_VERSION = 1;
   const IMAGE_STORE_NAME = 'files';
+  const WATERMARK_DB_NAME = 'kaki-mark-studio-watermarks-v1';
   const WATERMARK_STORE_NAME = 'watermarks';
   const ONBOARDING_KEY = 'kaki-mark-studio-onboarding-v1';
   const THEME_KEY = 'kaki-mark-studio-theme-v5';
@@ -233,6 +234,7 @@
   let kakiTemplateImage = null;
   let kakiTemplatePromise = null;
   let imageDbPromise = null;
+  let watermarkDbPromise = null;
   let persistQueue = Promise.resolve();
   let watermarkPersistQueue = Promise.resolve();
   let storageWarningShown = false;
@@ -283,9 +285,6 @@
         if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
           db.createObjectStore(IMAGE_STORE_NAME, { keyPath: 'id' });
         }
-        if (!db.objectStoreNames.contains(WATERMARK_STORE_NAME)) {
-          db.createObjectStore(WATERMARK_STORE_NAME, { keyPath: 'id' });
-        }
       };
       request.onsuccess = () => {
         const db = request.result;
@@ -295,6 +294,30 @@
       request.onerror = () => reject(request.error || new Error('作品缓存无法打开'));
     });
     return imageDbPromise;
+  }
+
+  function openWatermarkDb() {
+    if (watermarkDbPromise) return watermarkDbPromise;
+    watermarkDbPromise = new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) {
+        resolve(null);
+        return;
+      }
+      const request = indexedDB.open(WATERMARK_DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(WATERMARK_STORE_NAME)) {
+          db.createObjectStore(WATERMARK_STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        db.onversionchange = () => db.close();
+        resolve(db);
+      };
+      request.onerror = () => reject(request.error || new Error('水印素材缓存无法打开'));
+    });
+    return watermarkDbPromise;
   }
 
   function fileSnapshot() {
@@ -460,7 +483,7 @@
     watermarkPersistQueue = watermarkPersistQueue
       .catch(() => null)
       .then(async () => {
-        const db = await openImageDb();
+        const db = await openWatermarkDb();
         if (!db) throw new Error('浏览器不支持本地水印缓存');
         await new Promise((resolve, reject) => {
           const transaction = db.transaction(WATERMARK_STORE_NAME, 'readwrite');
@@ -487,7 +510,7 @@
 
   async function restoreWatermarkAssets() {
     try {
-      const db = await openImageDb();
+      const db = await openWatermarkDb();
       if (!db) return 0;
       const records = await new Promise((resolve, reject) => {
         const transaction = db.transaction(WATERMARK_STORE_NAME, 'readonly');
