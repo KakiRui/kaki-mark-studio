@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const MAX_FILES = 80;
+  const MAX_CACHED_FILES = 80;
   const MAX_FULLSCREEN_LAYERS = 8;
   const MAX_COMPOSITE_LAYERS = 8;
   const MAX_FILE_BYTES = 60 * 1024 * 1024;
@@ -321,7 +321,7 @@
   }
 
   function fileSnapshot() {
-    return state.files.map((record, order) => ({
+    return state.files.slice(0, MAX_CACHED_FILES).map((record, order) => ({
       id: record.id,
       order,
       name: record.name,
@@ -390,6 +390,7 @@
       const restored = records
         .filter((record) => record?.blob instanceof Blob)
         .sort((a, b) => Number(a.order) - Number(b.order))
+        .slice(0, MAX_CACHED_FILES)
         .map((record) => {
           const file = record.blob instanceof File
             ? record.blob
@@ -1546,12 +1547,7 @@
 
     const accepted = [];
     const rejected = [];
-    const room = MAX_FILES - state.files.length;
     for (const file of incoming) {
-      if (accepted.length >= room) {
-        rejected.push(`${file.name}：超过 ${MAX_FILES} 张上限`);
-        continue;
-      }
       if (!file.type.startsWith('image/')) {
         rejected.push(`${file.name}：不是图片`);
         continue;
@@ -1596,7 +1592,12 @@
     el.dropZone.classList.remove('is-loading');
     el.dropZone.removeAttribute('aria-busy');
 
-    if (loaded.length) toast(`已加入 ${loaded.length} 张图片`);
+    if (loaded.length) {
+      const cacheNotice = state.files.length > MAX_CACHED_FILES
+        ? `；当前共 ${state.files.length} 张，刷新后仅恢复前 ${MAX_CACHED_FILES} 张缓存`
+        : '';
+      toast(`已加入 ${loaded.length} 张图片${cacheNotice}`);
+    }
     if (rejected.length) toast(rejected.slice(0, 2).join('；'), 'error');
   }
 
